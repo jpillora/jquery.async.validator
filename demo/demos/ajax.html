@@ -1,0 +1,26 @@
+<div data-demo>
+  <form>
+    <input name="field" value="abc" data-validate="testAjax">
+    <input class="submit" type="submit"/>
+  </form>
+</div>
+
+<script data-demo type="text/javascript">if(window.initScripts) window.initScripts['ajax'] = function(demoContainer){
+  $.validationEngine.addRules({
+    field: {
+      testAjax: function(r) {
+
+        setTimeout(function() {
+          if(r.val() === 'abc')
+            r.callback();
+          else
+            r.callback('My ajax test failed!');
+        },100);
+
+        //ajax!
+        return undefined;
+      }
+    }
+  });
+  $("form",demoContainer).validationEngine();
+};</script>

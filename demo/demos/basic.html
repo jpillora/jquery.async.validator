@@ -1,0 +1,58 @@
+<div data-demo>
+  <form>
+    <input name="num1" value="42" data-validate="number">
+    <input name="num2" value="21" data-validate="number">
+
+    <input class="submit" type="submit"/>
+  </form>
+</div>
+
+<script data-demo type="text/javascript">if(window.initScripts) window.initScripts['basic'] = function(demoContainer){
+  $("form",demoContainer).validationEngine();
+};</script>
+
+<script data-test type="text/javascript">if(window.testScripts) window.testScripts['basic'] = function(demoContainerHtml){ //@ sourceURL=basic-tests.js
+  describe("Basic validations", function() {
+
+    beforeEach(function() {
+      fixtures.set(demoContainerHtml);
+    });
+
+    var elem = $('form',fixtures);
+
+    describe("When initialisation", function() {
+      it("should have jquery accessor functions", function() {
+        expect($.isFunction(elem.validationEngine)).to.be.true;
+      });
+
+      it("should have attached validation engine object", function() {
+        expect(elem.data('validationEngine')).to.not.be.undefined;
+      });
+    });
+
+    describe("When submitted", function() {
+
+      it("should be valid", function(done) {
+        elem.validate(function(result) {
+          expect(result).to.be.undefined;
+          done();
+        });
+      });
+
+      it("should be invalid", function(done) {
+        //make invalid
+        elem.find('input:first').val('abc');
+        elem.validate(function(result) {
+          expect(result).to.be.a('string');
+          done();
+        });
+      });
+
+      after(function() {
+        var cont = elem.parent();
+        cont.next().remove();cont.remove();
+      });
+    });
+
+  });
+};</script>

@@ -1,0 +1,27 @@
+/* only for demos */
+
+body#demo {
+  margin: 30px;
+}
+
+div.test-container {
+  display: none;
+}
+
+button.test-toggle {
+  margin-top: 5px;
+}
+
+.demo.collapse .demo-loading {
+  display: block;
+}
+.demo.collapse.ready .demo-loading {
+  display: none;
+}
+
+.demo.collapse .demo-wrapper {
+  display: none;
+}
+.demo.collapse.ready .demo-wrapper {
+  display: block;
+}
