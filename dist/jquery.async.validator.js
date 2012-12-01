@@ -278,7 +278,7 @@ var TypedSet = Set.extend({
    * Debug helpers
    * ===================================== */
 
-  var cons = $.console({ prefix: 'validationEngine: ' }),
+  var cons = $.console({ prefix: 'asyncValidator: ' }),
       log  = cons.log,
       warn = cons.warn,
       info = cons.info;
@@ -1208,11 +1208,11 @@ var TypedSet = Set.extend({
         this.setName();
         this.executions = [];
 
-        if(!elem.length || elem.data('validationEngine'))
+        if(!elem.length || elem.data('asyncValidator'))
           return false;
 
         if(elem)
-          elem.data('validationEngine',this);
+          elem.data('asyncValidator',this);
 
         return true;
       },
@@ -1483,7 +1483,7 @@ var TypedSet = Set.extend({
       onValidate: function(event) {
 
         var elem = $(event.currentTarget);
-        var field = elem.data('validationEngine') || this.updateField(elem);
+        var field = elem.data('asyncValidator') || this.updateField(elem);
 
         field.log("validate");
         field.validate($.noop);
@@ -1588,7 +1588,7 @@ var TypedSet = Set.extend({
 
   //allow programmatic validations
   $.fn.validate = function(callback) {
-    var validator = $(this).data('validationEngine');
+    var validator = $(this).data('asyncValidator');
     if(validator)
       validator.validate(callback);
     else
@@ -1597,17 +1597,17 @@ var TypedSet = Set.extend({
 
   $.fn.validate.version = '3.0';
 
-  $.fn.validationEngine = function(userOptions) {
+  $.fn.asyncValidator = function(userOptions) {
     return this.each(function(i) {
 
       //get existing form class this element
-      var form = $.validationEngine.forms.find($(this));
+      var form = $.asyncValidator.forms.find($(this));
 
       //unbind and destroy form
       if(userOptions === false) {
         if(form) {
           form.unbindEvents();
-          $.validationEngine.forms.remove(form);
+          $.asyncValidator.forms.remove(form);
         }
         return;
       }
@@ -1620,7 +1620,7 @@ var TypedSet = Set.extend({
         form.extendOptions(userOptions);
       } else {
         form = new ValidationForm($(this), options);
-        $.validationEngine.forms.add(form);
+        $.asyncValidator.forms.add(form);
       }
 
     });
@@ -1630,7 +1630,7 @@ var TypedSet = Set.extend({
    * Plugin Public Interface
    * ===================================== */
 
-  $.validationEngine = {
+  $.asyncValidator = {
     version: '3.0',
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
@@ -1652,8 +1652,8 @@ var TypedSet = Set.extend({
 
 (function($) {
 
-  if($.validationEngine === undefined) {
-    window.alert("Please include jquery.validationEngine.js before each rule file");
+  if($.asyncValidator === undefined) {
+    window.alert("Please include jquery.asyncValidator.js before each rule file");
     return;
   }
 
@@ -1680,7 +1680,7 @@ var TypedSet = Set.extend({
    *    }
    *  # it gets merged with the object properties e.g. 'r.messages'
    */
-  $.validationEngine.addFieldRules({
+  $.asyncValidator.addFieldRules({
     /* Regex validators
      * - at plugin load, 'regex' will be transformed into validator function 'fn' which uses 'message'
      */
@@ -1714,7 +1714,7 @@ var TypedSet = Set.extend({
     },
     date: {
       fn: function(r) {
-        if($.validationEngine.utils.parseDate(r.val()))
+        if($.asyncValidator.utils.parseDate(r.val()))
           return true;
         return r.message;
       },
@@ -1875,7 +1875,7 @@ var TypedSet = Set.extend({
       var currDate = new Date();
       var minDate = new Date();
       minDate.setFullYear(minDate.getFullYear() - parseInt(age,10));
-      var fieldDate = $.validationEngine.utils.parseDate(r.val());
+      var fieldDate = $.asyncValidator.utils.parseDate(r.val());
 
       if(fieldDate === "Invalid Date")
         return "Invalid Date";
@@ -1893,7 +1893,7 @@ var TypedSet = Set.extend({
    *      whether to run the group rules before or after
    *      the field validations (default: 'after')
    */
-  $.validationEngine.addGroupRules({
+  $.asyncValidator.addGroupRules({
     required: {
       run: 'before',
       extend: "field:required",

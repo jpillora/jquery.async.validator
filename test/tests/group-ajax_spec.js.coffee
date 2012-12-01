@@ -17,7 +17,7 @@ describe "Group Ajax validation", ->
   """
 
   #validators used in this spec
-  $.validationEngine.addFieldRules
+  $.asyncValidator.addFieldRules
     numberAsync:
       fn: (r) ->
         sum = 0
@@ -30,7 +30,7 @@ describe "Group Ajax validation", ->
         #ajax!
         `undefined`
 
-  $.validationEngine.addGroupRules
+  $.asyncValidator.addGroupRules
     sumTo10Async:
       run: 'after'
       fn: (r) ->
@@ -49,7 +49,7 @@ describe "Group Ajax validation", ->
   beforeEach ->
     $('#konacha').html html
     form = $("form")
-    form.validationEngine(skipHiddenFields: false)
+    form.asyncValidator(skipHiddenFields: false)
 
   describe "When submitted (advanced)", ->
 

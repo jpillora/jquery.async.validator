@@ -1,5 +1,6 @@
-jquery.async.validator v1.0.0
+jQuery Async Validator
 =====
+v1.0.0
 
 Summary
 ---
@@ -7,7 +8,7 @@ An asynchronous validation library for easy to use client side validations.
 
 Documentation and Demos
 ---
-Link!
+Are found [here](http://www.google.com)!
 
 Todo
 ---

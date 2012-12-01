@@ -14,7 +14,7 @@ describe "Ajax validations", ->
   """
 
   #ajax test validator
-  $.validationEngine.addFieldRules
+  $.asyncValidator.addFieldRules
     testAjax:
       fn: (r) ->
         setTimeout ->
@@ -30,7 +30,7 @@ describe "Ajax validations", ->
   beforeEach ->
     $('#konacha').html html
     form = $("form")
-    form.validationEngine(skipHiddenFields: false)
+    form.asyncValidator(skipHiddenFields: false)
 
   describe "On submission", ->
     #valid test

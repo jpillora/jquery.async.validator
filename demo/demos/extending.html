@@ -7,7 +7,7 @@
 </div>
 
 <script data-demo type="text/javascript">if(window.initScripts) window.initScripts['extending'] = function(demoContainer) {
-  $.validationEngine.addRules({
+  $.asyncValidator.addRules({
     field: {
       test: {
         fn: function(r) {
@@ -25,7 +25,7 @@
     }
   });
 
-  demoContainer.find("form").validationEngine();
+  demoContainer.find("form").asyncValidator();
 };</script>
 
 <script data-test type="text/javascript">if(window.mocha) (function(){ //@ sourceURL=extending-tests.js

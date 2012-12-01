@@ -4,7 +4,7 @@
    * Debug helpers
    * ===================================== */
 
-  var cons = $.console({ prefix: 'validationEngine: ' }),
+  var cons = $.console({ prefix: 'asyncValidator: ' }),
       log  = cons.log,
       warn = cons.warn,
       info = cons.info;
@@ -934,11 +934,11 @@
         this.setName();
         this.executions = [];
 
-        if(!elem.length || elem.data('validationEngine'))
+        if(!elem.length || elem.data('asyncValidator'))
           return false;
 
         if(elem)
-          elem.data('validationEngine',this);
+          elem.data('asyncValidator',this);
 
         return true;
       },
@@ -1209,7 +1209,7 @@
       onValidate: function(event) {
 
         var elem = $(event.currentTarget);
-        var field = elem.data('validationEngine') || this.updateField(elem);
+        var field = elem.data('asyncValidator') || this.updateField(elem);
 
         field.log("validate");
         field.validate($.noop);
@@ -1314,7 +1314,7 @@
 
   //allow programmatic validations
   $.fn.validate = function(callback) {
-    var validator = $(this).data('validationEngine');
+    var validator = $(this).data('asyncValidator');
     if(validator)
       validator.validate(callback);
     else
@@ -1323,17 +1323,17 @@
 
   $.fn.validate.version = '3.0';
 
-  $.fn.validationEngine = function(userOptions) {
+  $.fn.asyncValidator = function(userOptions) {
     return this.each(function(i) {
 
       //get existing form class this element
-      var form = $.validationEngine.forms.find($(this));
+      var form = $.asyncValidator.forms.find($(this));
 
       //unbind and destroy form
       if(userOptions === false) {
         if(form) {
           form.unbindEvents();
-          $.validationEngine.forms.remove(form);
+          $.asyncValidator.forms.remove(form);
         }
         return;
       }
@@ -1346,7 +1346,7 @@
         form.extendOptions(userOptions);
       } else {
         form = new ValidationForm($(this), options);
-        $.validationEngine.forms.add(form);
+        $.asyncValidator.forms.add(form);
       }
 
     });
@@ -1356,7 +1356,7 @@
    * Plugin Public Interface
    * ===================================== */
 
-  $.validationEngine = {
+  $.asyncValidator = {
     version: '3.0',
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,

@@ -8,7 +8,7 @@
 </div>
 
 <script data-demo type="text/javascript">if(window.initScripts) window.initScripts['basic'] = function(demoContainer){
-  $("form",demoContainer).validationEngine();
+  $("form",demoContainer).asyncValidator();
 };</script>
 
 <script data-test type="text/javascript">if(window.testScripts) window.testScripts['basic'] = function(demoContainerHtml){ //@ sourceURL=basic-tests.js
@@ -22,11 +22,11 @@
 
     describe("When initialisation", function() {
       it("should have jquery accessor functions", function() {
-        expect($.isFunction(elem.validationEngine)).to.be.true;
+        expect($.isFunction(elem.asyncValidator)).to.be.true;
       });
 
       it("should have attached validation engine object", function() {
-        expect(elem.data('validationEngine')).to.not.be.undefined;
+        expect(elem.data('asyncValidator')).to.not.be.undefined;
       });
     });
 

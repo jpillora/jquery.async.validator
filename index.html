@@ -6,62 +6,111 @@
 </head>
 <body id="demo">
 
-  <div class="loading-cover" style="z-index: 2000;  position: fixed;  height: 100%;  width: 100%;  top: 0px; left: 0px;  z-index: 2000;  color: #1B1B1B;  text-align: center;  padding-top: 40px;  font-size: 40px;  background: url('http://framework.jpillora.com/img/loading64black.gif') no-repeat scroll 50% 100px white; font-family: Helvetica;">Loading...</div>
+   <div class="loading-cover" style="z-index: 2000;  position: fixed;  height: 100%;  width: 100%;  top: 0px; left: 0px;  z-index: 2000;  color: #1B1B1B;  text-align: center;  padding-top: 40px;  font-size: 40px;  background: url('http://framework.jpillora.com/img/loading64black.gif') no-repeat scroll 50% 100px white; font-family: Helvetica;">Loading...</div>
 
-  <h1>jQuery Async Validator</h1>
-  <h2>Demos</h2>
-  <div>
+  <div class="container-fluid">
 
-  <div class="accordion" id="demos"></div>
+    <div class="row-fluid">
+      <div class="span3">
+        <div class="well sidebar-nav">
+          <ul class="nav nav-list">
+            <li class="nav-header">Basic</li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li class="nav-header">Advanced</li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li class="nav-header">API</li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+          </ul>
+        </div><!--/.well -->
+      </div><!--/span-->
+      <div class="span9">
+        <div class="hero-unit">
+          <h1>jQuery Async Validator</h1>
+          <p>An jQuery plugin to provide easy to use asynchronous client side validations.</p>
+          <p><a </a></p>
+          <p><a class="btn btn-primary btn-large" href="https://github.com/jpillora/jquery.async.validator">Github &raquo;</a></p>
+        </div>
+        <div class="row-fluid" id="basic">
+          <h3>Basic Example</h3>
 
-  </div>
-  <h2>Documentation</h2>
-  <a href="https://github.com/jpillora/jquery.async.validator">Github</a>
-  <h2>Authors</h2>
-  <p>Copyright(c) 2010</p>
-  </p>1.0 Cedric Dugas http://www.position-absolute.com</p>
-  </p>2.0 Rewrite by Olivier Refalo http://www.crionics.com</p>
-  </p>3.0 Rewrite by Jaime Pillora</p>
+          Given the following:
 
+          <pre class="prettyprint">
+&lt;form id='myForm'&gt;
+  &lt;input value='42'&gt;
+  &lt;input value='10/06/2012'&gt;
+  &lt;input class='submit' type='submit'/&gt;
+&lt;/form&gt;
+</pre>
 
-  <script id="demoTemplate" type="text/template">
-  <!-- demo template -->
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle" data-toggle="collapse" data-parent="#demos" href="#demo-<%= name %>"><%= title %></a>
-    </div>
+          Add some validators to the inputs:
+          <pre class="prettyprint">
+&lt;form id='myForm'&gt;
+  &lt;input value='42' data-validate='number'&gt;
+  &lt;input value='10/06/2012' data-validate='date'&gt;
+  &lt;input class='submit' type='submit'/&gt;
+&lt;/form&gt;
+</pre>
+          
+          And attach the 
+        
+          
 
-    <div id="demo-<%= name %>" data-name="<%= name %>" class="demo collapse accordion-body in">
-      <div class="accordion-inner">
-
-        <div class="demo-loading">
-          Loading...
         </div>
 
-        <div class="demo-wrapper">
+      </div>
+    </div>
 
-          <div class="demo-container"></div>
+    <div class="accordion" id="demos"></div>
+    <hr>
 
-          <hr/>
-          HTML
-          <pre class="html"></pre>
+    <footer>
+      <p>&copy; Jaime Pillora 2012</p>
+    </footer>
 
-          <hr/>
-          JavaScript
-          <pre  class="script"></pre>
+  </div>
 
-          <div class='test-container'>
-            <hr/>
-            <span class='test-label'>Unit Tests </span>
-            <pre  class="tests"></pre>
+  <script id="demoTemplate" type="text/template">
+    <!-- demo template -->
+    <div class="accordion-group">
+      <div class="accordion-heading">
+        <a class="accordion-toggle" data-toggle="collapse" data-parent="#demos" href="#demo-<%= name %>"><%= title %></a>
+      </div>
+
+      <div id="demo-<%= name %>" data-name="<%= name %>" class="demo collapse accordion-body in">
+        <div class="accordion-inner">
+
+          <div class="demo-loading">
+            Loading...
           </div>
 
-          <button class='test-toggle' data-toggle='.test-container'>Show Unit Tests</button>
+          <div class="demo-wrapper">
 
+            <div class="demo-container"></div>
+
+            <hr/>
+            HTML
+            <pre class="html"></pre>
+
+            <hr/>
+            JavaScript
+            <pre  class="script"></pre>
+
+            <div class='test-container'>
+              <hr/>
+              <span class='test-label'>Unit Tests </span>
+              <pre  class="tests"></pre>
+            </div>
+
+            <button class='test-toggle' data-toggle='.test-container'>Show Unit Tests</button>
+
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </script>
 
   <script type="text/javascript">

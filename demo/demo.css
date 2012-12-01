@@ -1,7 +1,7 @@
 /* only for demos */
 
-body#demo {
-  margin: 30px;
+body {
+  padding-top: 20px;
 }
 
 div.test-container {
@@ -10,6 +10,11 @@ div.test-container {
 
 button.test-toggle {
   margin-top: 5px;
+}
+
+pre.prettyprint {
+  padding: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .demo.collapse .demo-loading {

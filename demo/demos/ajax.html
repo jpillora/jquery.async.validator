@@ -6,7 +6,7 @@
 </div>
 
 <script data-demo type="text/javascript">if(window.initScripts) window.initScripts['ajax'] = function(demoContainer){
-  $.validationEngine.addRules({
+  $.asyncValidator.addRules({
     field: {
       testAjax: function(r) {
 
@@ -22,5 +22,5 @@
       }
     }
   });
-  $("form",demoContainer).validationEngine();
+  $("form",demoContainer).asyncValidator();
 };</script>

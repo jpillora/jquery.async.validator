@@ -16,7 +16,7 @@ describe "Extending validations", ->
   """
 
   #validators used in this spec
-  $.validationEngine.addFieldRules
+  $.asyncValidator.addFieldRules
     validator1:
       fn: (r) ->
         return "Must equal '" + r.myVar + "' (not " + r.val() + ")"  if r.val() isnt r.myVar
@@ -40,7 +40,7 @@ describe "Extending validations", ->
   beforeEach ->
     $('#konacha').html html
     form = $("form")
-    form.validationEngine(skipHiddenFields: false)
+    form.asyncValidator(skipHiddenFields: false)
 
   describe "When submitted", ->
 

@@ -14,6 +14,10 @@ define([,
   'lib/bootstrap.min'],
   function(log) {
 
+    // require(['css!framework/css/bootstrap.cerulean.min'], function() {
+    //   $('.loading-cover').stop().delay(2000).fadeOut('fast');
+    // });
+
     var demos = [
       'basic',
       // 'regular-expressions',
@@ -110,6 +114,8 @@ define([,
       $('.collapse').collapse('hide').on('show', setupDemo);
 
       $('.loading-cover').fadeOut('fast');
+
+      window.prettyPrint();
 
       //intercept all form submissions
       $("#demos").on("submit","form", function() {

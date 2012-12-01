@@ -1,7 +1,7 @@
 (function($) {
 
-  if($.validationEngine === undefined) {
-    window.alert("Please include jquery.validationEngine.js before each rule file");
+  if($.asyncValidator === undefined) {
+    window.alert("Please include jquery.asyncValidator.js before each rule file");
     return;
   }
 
@@ -28,7 +28,7 @@
    *    }
    *  # it gets merged with the object properties e.g. 'r.messages'
    */
-  $.validationEngine.addFieldRules({
+  $.asyncValidator.addFieldRules({
     /* Regex validators
      * - at plugin load, 'regex' will be transformed into validator function 'fn' which uses 'message'
      */
@@ -62,7 +62,7 @@
     },
     date: {
       fn: function(r) {
-        if($.validationEngine.utils.parseDate(r.val()))
+        if($.asyncValidator.utils.parseDate(r.val()))
           return true;
         return r.message;
       },
@@ -223,7 +223,7 @@
       var currDate = new Date();
       var minDate = new Date();
       minDate.setFullYear(minDate.getFullYear() - parseInt(age,10));
-      var fieldDate = $.validationEngine.utils.parseDate(r.val());
+      var fieldDate = $.asyncValidator.utils.parseDate(r.val());
 
       if(fieldDate === "Invalid Date")
         return "Invalid Date";
@@ -241,7 +241,7 @@
    *      whether to run the group rules before or after
    *      the field validations (default: 'after')
    */
-  $.validationEngine.addGroupRules({
+  $.asyncValidator.addGroupRules({
     required: {
       run: 'before',
       extend: "field:required",

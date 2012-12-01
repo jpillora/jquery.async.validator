@@ -17,7 +17,7 @@ describe "Group validation (Advanced)", ->
     </div>
   """
   #validators used in this spec
-  $.validationEngine.addGroupRules
+  $.asyncValidator.addGroupRules
     sumTo10:
       run: 'after'
       fn: (r) ->
@@ -31,7 +31,7 @@ describe "Group validation (Advanced)", ->
   beforeEach ->
     $('#konacha').html html
     form = $("form")
-    form.validationEngine(skipHiddenFields: false)
+    form.asyncValidator(skipHiddenFields: false)
 
   describe "When submitted (advanced)", ->
 

@@ -26,10 +26,10 @@ describe "Validators", ->
   beforeEach ->
     $('#konacha').html html
     form = $("form")
-    form.validationEngine(skipHiddenFields: false)
+    form.asyncValidator(skipHiddenFields: false)
 
   afterEach ->
-    form.validationEngine(false)
+    form.asyncValidator(false)
 
   describe "number", ->
     it "should be a number", ->
