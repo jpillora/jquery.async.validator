@@ -1,5 +1,9 @@
 (function($) {
 
+  "use strict";
+
+  var VERSION = "1.0.0";
+
   /* ===================================== *
    * Debug helpers
    * ===================================== */
@@ -196,7 +200,7 @@
    * Plugin Settings/Variables
    * ===================================== */
 
-  var defaultOptions = {
+  var globalOptions = {
 
     // Display log messages flag
     debug: false,
@@ -237,6 +241,19 @@
     }
   };
 
+  //option object creator inheriting from globals
+  function CustomOptions(opts) {
+    $.extend(true, this, opts);
+  }
+  CustomOptions.prototype = globalOptions;
+
+  //append to arguments[0]
+  function appendArg(args, expr) {
+      var a = [].slice.call(args, 0);
+      a[0] = expr + a[0];
+      return a;
+  }
+
   /* ===================================== *
    * Base Class
    * ===================================== */
@@ -253,20 +270,14 @@
     },
 
     log: function() {
-      if(!defaultOptions.debug) return;
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      log.apply(this, args);
+      if(!globalOptions.debug) return;
+      log.apply(this, appendArg(arguments, this.toString()));
     },
     warn: function() {
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      warn.apply(this, args);
+      warn.apply(this, appendArg(arguments, this.toString()));
     },
     info: function() {
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      info.apply(this, args);
+      info.apply(this, appendArg(arguments, this.toString()));
     },
 
     bind: function(name) {
@@ -289,18 +300,17 @@
   var ajaxCache = { loading: {}, loaded: {} } ;
 
   //callable from user defined rules. alias: r.ajax
-  function ajaxHelper(userOpts, ruleInterface) {
+  function ajaxHelper(userOpts, rule, ruleInterface, validationElem) {
 
     var defaults = {
-      method: "GET",
-      timeout: 15 * 1000
-    };
-
-    var promptContainer = ruleInterface.triggerField || ruleInterface.field;
-
-    var userSuccess = userOpts.success;
-    var userError   = userOpts.error;
-    var serialised = JSON ? JSON.stringify(userOpts) : guid();
+          method: "GET",
+          timeout: 15 * 1000
+        },
+        promptContainer = ruleInterface.triggerField || ruleInterface.field,
+        userSuccess = userOpts.success,
+        userError   = userOpts.error,
+        options = validationElem.options,
+        serialised = JSON ? JSON.stringify(userOpts) : guid();
 
     function onErrorDefault(e) {
       log("ajax error");
@@ -314,7 +324,11 @@
 
     //already completed
     if(ajaxCache.loaded[serialised]) {
-      userCallbacks.success.apply(this,ajaxCache.loaded[serialised]);
+
+      var args = ajaxCache.loaded[serialised],
+          success = userCallbacks.success;
+
+      success.apply(rule, args);
       return;
     }
 
@@ -326,14 +340,14 @@
 
     if(ajaxCache.loading[serialised].length !== 1) return;
 
-    defaultOptions.prompt(promptContainer, "Checking...", "load");
+    options.prompt(promptContainer, "Checking...", "load");
     
     function intercept() {
-      defaultOptions.prompt(promptContainer, false);
+      options.prompt(promptContainer, false);
 
       var reqs = ajaxCache.loading[serialised];
       while(reqs.length)
-        reqs.pop().success.apply(this,arguments);
+        reqs.pop().success.apply(rule,arguments);
       
       ajaxCache.loaded[serialised] = arguments;
     }
@@ -436,9 +450,6 @@
     //the 'this's in these interface mixins
     //refer to the rule 'r' object
     defaultInterface: {
-      ajax: function(userOpts) {
-        ajaxHelper(userOpts, this);
-      },
       log: log,
       warn: warn
     },
@@ -847,7 +858,8 @@
 
         this.rule = ruleParamObj.rule;
         this.params = ruleParamObj.params;
-        this.validationObj = this.parent.element;
+        this.validationElem = this.parent.element;
+        this.options = this.validationElem.options;
       },
 
       execute: function() {
@@ -872,8 +884,8 @@
         };
 
         //sanity checks
-        if(!this.validationObj || !rule.ready) {
-          this.warn(!this.validationObj ? 'invalid parent.' : 'not ready.');
+        if(!this.validationElem || !rule.ready) {
+          this.warn(!this.validationElem ? 'invalid parent.' : 'not ready.');
           callback();
           return d.promise();
         } else {
@@ -887,24 +899,30 @@
           callback("Timeout");
         }, 10000);
 
+
+        var currInterface = {};
+
         //find trigger field in a group execution
         var triggerField = null;
         if(this.parent instanceof GroupExecution)
-          triggerField = this.parent.triggerField();
+          currInterface.triggerField = this.parent.triggerField();
+
+        currInterface.field = this.validationElem.elem;
+        currInterface.form =  this.validationElem.form.elem;
+        currInterface.callback = callback;
+        currInterface.params = this.params;
+        currInterface.args = this.params;
+        currInterface.ajax = function(userOpts) {
+          ajaxHelper(userOpts, rule, currInterface, this.options);
+        };
 
         //build the rule interface 'r'
-        var ruleInterface = rule.buildInterface({
-          field: this.validationObj.elem,
-          triggerField: triggerField,
-          form: this.validationObj.form.elem,
-          callback: callback,
-          params: this.params,
-          args: this.params
-        });
+        var ruleInterface = rule.buildInterface(currInterface);
 
-        //execute validator
-        var result = rule.ready ? rule.fn(ruleInterface) : true;
-        //instant callback - allow sync calls
+        //finally execute validator
+        var result = rule.fn(ruleInterface);
+
+        //instant callback - becomes synchronous
         if(result !== undefined) callback(result);
 
         return d.promise();
@@ -1066,7 +1084,8 @@
         if(!elem.length) return;
         if(!elem.is("form")) return;
         if(!this._super(elem)) return;
-        this.extendOptions(options);
+
+        this.options = new CustomOptions(options);
 
         this.fields = new TypedSet(ValidationField);
         this.fieldsets = new TypedSet(ValidationGroup);
@@ -1084,16 +1103,10 @@
       },
 
       extendOptions: function(opts) {
-        if(!this.options)
-          this.options = {};
         $.extend(true, this.options, opts);
       },
 
       bindEvents: function() {
-
-        //delegate events
-        if(this.options.hideErrorOnChange)
-          this.elem.on("keyup.jqv", "input", this.onKeyup);
 
         this.elem
           .on("keyup.jqv", "input", this.onKeyup)
@@ -1105,7 +1118,7 @@
           .trigger("initialised.jqv");
 
         this.updateFields();
-        this.info("validation engine bound to " + this.fields.size() + " elems");
+        this.info("bound to " + this.fields.size() + " elems");
       },
 
       unbindEvents: function() {
@@ -1151,7 +1164,6 @@
 
         fieldset = this.fieldsets.find(fieldsetElem);
 
-        //fieldset not created yet, instantiate
         if(!fieldset) {
           fieldset = new ValidationGroup(fieldsetElem, this);
           this.fieldsets.add(fieldset);
@@ -1203,7 +1215,10 @@
       },
 
       onKeyup: function(event) {
-        this.options.prompt($(event.currentTarget),false);
+
+        if(this.options.hideErrorOnChange)
+          this.options.prompt($(event.currentTarget),false);
+
       },
 
       onValidate: function(event) {
@@ -1309,7 +1324,7 @@
     for(; i<l; ++i )
       fns[i]().done(pass).fail(fail);
 
-    return d;
+    return d.promise();
   };
 
   //allow programmatic validations
@@ -1318,10 +1333,10 @@
     if(validator)
       validator.validate(callback);
     else
-      warn("jQuery element does not have a validation engine attached");
+      warn("element does not have async validator attached");
   };
 
-  $.fn.validate.version = '3.0';
+  $.fn.validate.version = VERSION;
 
   $.fn.asyncValidator = function(userOptions) {
     return this.each(function(i) {
@@ -1330,7 +1345,7 @@
       var form = $.asyncValidator.forms.find($(this));
 
       //unbind and destroy form
-      if(userOptions === false) {
+      if(userOptions === false || userOptions === "destroy") {
         if(form) {
           form.unbindEvents();
           $.asyncValidator.forms.remove(form);
@@ -1338,14 +1353,10 @@
         return;
       }
 
-      //build options
-      var userValidationRules = userOptions;
-      var options = $.extend(true, {}, defaultOptions, userOptions);
-
       if(form) {
         form.extendOptions(userOptions);
       } else {
-        form = new ValidationForm($(this), options);
+        form = new ValidationForm($(this), userOptions);
         $.asyncValidator.forms.add(form);
       }
 
@@ -1356,21 +1367,25 @@
    * Plugin Public Interface
    * ===================================== */
 
-  $.asyncValidator = {
-    version: '3.0',
+  $.asyncValidator = function(options) {
+    $.extend(globalOptions, options);
+  };
+
+  $.extend($.asyncValidator, {
+    version: VERSION,
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     log: info,
     warn: warn,
-    defaults: defaultOptions,
+    defaults: globalOptions,
+    globals: globalOptions,
     utils: Utils,
     forms: new TypedSet(ValidationForm, [], "FormSet")
-  };
+  });
 
   /* ===================================== *
    * Plugin Initialiser
    * ===================================== */
-
 
   log("plugin added.");
 

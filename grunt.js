@@ -1,5 +1,14 @@
+var fs = require('fs');
+
 /*global module:false*/
 module.exports = function(grunt) {
+
+  //write out a manifest of all the tests
+  var tests = [];
+  fs.readdirSync('test/tests/').forEach(function(t) { 
+    tests.push("tests/"+t); 
+  });
+  fs.writeFileSync('test/specs.json', JSON.stringify(tests));
 
   //file lists
   var vanillaFiles = [
@@ -75,6 +84,7 @@ module.exports = function(grunt) {
         browser: true
       },
       globals: {
+        require: true,
         jQuery: true,
         ParamParser: true,
         guid: true,

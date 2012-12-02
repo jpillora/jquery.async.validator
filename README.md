@@ -4,7 +4,9 @@ v1.0.0
 
 Summary
 ---
-A jQuery plugin for asynchronous client-side validations.
+A jQuery plugin for fully customisable asynchronous client-side validations.
+
+Optionally includes another plugin - [jQuery prompt](http://www.github.com/jpillora/jquery.prompt/) - for displaying coloured text prompts.
 
 Full Documentation and Demos
 ---
@@ -17,8 +19,8 @@ Downloads
 
 With `jquery.prompt`
 
-* [Development Version with jquery.prompt]
-* [Production Version with jquery.prompt]
+* [Development Version including jquery.prompt]
+* [Production Version including jquery.prompt]
 * [Stylesheet for jquery.prompt]
 
 Without `jquery.prompt`

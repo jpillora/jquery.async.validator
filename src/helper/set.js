@@ -14,10 +14,14 @@ var Set = Class.extend({
   find: function(obj) {
     for(var i = 0, l = this.array.length;i<l; ++i)
       if($.isFunction(obj) ?
-          obj(this.array[i]) :
-          this.equals(this.array[i],obj))
-        return this.array[i];
+          obj(this.get(i)) :
+          this.equals(this.get(i),obj))
+        return this.get(i);
     return null;
+  },
+
+  get: function(i) {
+    return this.array[i];
   },
   //truthy find
   has: function(item) {
@@ -42,8 +46,8 @@ var Set = Class.extend({
   remove: function(item) {
     var newSet = [];
     for(var i = 0, l = this.array.length; i<l; ++i)
-      if(!this.equals(this.array[i],item))
-        newSet.push(this.array[i]);
+      if(!this.equals(this.get(i),item))
+        newSet.push(this.get(i));
 
     this.array = newSet;
     return item;
@@ -59,7 +63,7 @@ var Set = Class.extend({
   },
   each: function(fn) {
     for(var i = 0, l = this.array.length; i<l; ++i)
-      fn(this.array[i]);
+      fn(this.get(i));
   },
   map: function(fn) {
     return $.map(this.array,fn);
