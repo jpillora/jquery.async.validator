@@ -19,7 +19,7 @@ With `jquery.prompt`
 
 * [Development Version with jquery.prompt]
 * [Production Version with jquery.prompt]
-* [jquery.prompt Stylesheet]
+* [Stylesheet for jquery.prompt]
 
 Without `jquery.prompt`
 *Note You must implement your own `prompt` handler.*
@@ -73,7 +73,7 @@ Released !
   [Production Version with jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js
   [Development Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.js
   [Production Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.min.js
-  [jquery.prompt Stylesheet]: http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css
+  [Stylesheet for jquery.prompt]: http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css
 
 
 
