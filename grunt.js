@@ -1,6 +1,17 @@
 /*global module:false*/
 module.exports = function(grunt) {
 
+  //file lists
+  var vanillaFiles = [
+    '<file_strip_banner:src/helper/jquery.console.js>',
+    '<file_strip_banner:src/helper/guid.js>',
+    '<file_strip_banner:src/helper/param-parser.js>',
+    '<file_strip_banner:src/helper/resig-class.js>',
+    '<file_strip_banner:src/helper/set.js>',
+    '<file_strip_banner:src/helper/typedset.js>',
+    '<file_strip_banner:src/<%= pkg.name %>.js>',
+    '<file_strip_banner:src/<%= pkg.name %>.rules.js>'
+  ];
 
   // Project configuration.
   grunt.initConfig({
@@ -12,34 +23,35 @@ module.exports = function(grunt) {
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
         '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
         '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>' +
-        ' MIT Licensed  */',
+        ' MIT Licensed  */\n',
       header:
         '(function() {',
       footer:
         '}());'
     },
     concat: {
-      dist: {
-        src: [
-          '<banner:meta.banner>',
-          '<banner:meta.header>',
-          '<file_strip_banner:src/helper/jquery.console.js>',
-          '<file_strip_banner:src/helper/guid.js>',
-          '<file_strip_banner:src/helper/param-parser.js>',
-          '<file_strip_banner:src/helper/resig-class.js>',
-          '<file_strip_banner:src/helper/set.js>',
-          '<file_strip_banner:src/helper/typedset.js>',
-          '<file_strip_banner:src/<%= pkg.name %>.js>',
-          '<file_strip_banner:src/<%= pkg.name %>.rules.js>',
-          '<banner:meta.footer>'
-        ],
+      vanilla: {
+        src: ['<banner:meta.banner>','<banner:meta.header>'].
+              concat(vanillaFiles).
+              concat(['<banner:meta.footer>']),
         dest: 'dist/<%= pkg.name %>.js'
+      },
+      includePrompt: {
+        src: ['<banner:meta.banner>','<banner:meta.header>',
+               '<file_strip_banner:../jquery.prompt/dist/jquery.prompt.js>'
+              ].concat(vanillaFiles).
+              concat(['<banner:meta.footer>']),
+        dest: 'dist/<%= pkg.name %>.prompt.js'
       }
     },
     min: {
-      dist: {
-        src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+      vanilla: {
+        src: ['<banner:meta.banner>', '<config:concat.vanilla.dest>'],
         dest: 'dist/<%= pkg.name %>.min.js'
+      },
+      includePrompt: {
+        src: ['<banner:meta.banner>', '<config:concat.includePrompt.dest>'],
+        dest: 'dist/<%= pkg.name %>.prompt.min.js'
       }
     },
     lint: {
