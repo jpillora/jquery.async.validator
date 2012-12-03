@@ -4,29 +4,28 @@ body {
   padding-top: 20px;
 }
 
-div.test-container {
+.test-container {
   display: none;
 }
 
-button.test-toggle {
+h3 {
+  text-decoration: underline;
+}
+
+.test-toggle {
   margin-top: 5px;
 }
 
-pre.prettyprint {
+#app pre.prettyprint {
   padding: 5px;
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.demo.collapse .demo-loading {
-  display: block;
-}
-.demo.collapse.ready .demo-loading {
-  display: none;
+.demo {
+  margin: 10px;
+  margin-bottom: 50px;
 }
 
-.demo.collapse .demo-wrapper {
-  display: none;
-}
-.demo.collapse.ready .demo-wrapper {
-  display: block;
+.note {
+  font-style: italic;
 }
