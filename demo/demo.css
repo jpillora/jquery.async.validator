@@ -4,29 +4,33 @@ body {
   padding-top: 20px;
 }
 
-div.test-container {
+.test-container {
   display: none;
 }
 
-button.test-toggle {
+h3 {
+  text-decoration: underline;
+}
+
+.test-toggle {
   margin-top: 5px;
 }
 
-pre.prettyprint {
-  padding: 5px;
+#app pre, #app .demo div[data-html] {
+  padding: 15px;
+  margin: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
 }
 
-.demo.collapse .demo-loading {
-  display: block;
-}
-.demo.collapse.ready .demo-loading {
-  display: none;
+.demo {
+  margin: 10px;
+  margin-bottom: 50px;
 }
 
-.demo.collapse .demo-wrapper {
-  display: none;
+.alert {
+  margin: 10px;
 }
-.demo.collapse.ready .demo-wrapper {
-  display: block;
+.alert strong {
+  font-style: italic;
 }

@@ -1,45 +1,17 @@
-/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-02
+/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-05
 * https://github.com/jpillora/jquery.async.validator
 * Copyright (c) 2012 Jaime Pillora MIT Licensed  */
 
 
 (function() {
 
-/*! jQuery Prompt - v1.0.0 - 2012-12-02
+/*! jQuery Prompt - v1.0.0 - 2012-12-05
 * https://github.com/jpillora/jquery.prompt
 * Copyright (c) 2012 Jaime Pillora; Licensed MIT */
 
 $(function() {
 
-  var options = {
-    // Auto-hide prompt
-    autoHidePrompt: false,
-    // Delay before auto-hide
-    autoHideDelay: 10000,
-    // set to true, when the prompt arrow needs to be displayed
-    showArrow: true,
-    // Fade out duration while hiding the validations
-    fadeDuration: 600,
-    // Gap between prompt and element
-    gap: 0,
-    // Opacities
-    hiddenOpacity: 0,
-    shownOpacity: 0.87
-    //TODO add z-index watches
-    //parents:  { '.ui-dialog': 5001 }
-  };
-
-  //change options
-  function setDefaults(userOptions) {
-    $.extend(options, userOptions);
-  }
-
-  //permanent hide listener
-  $(document).on("click", ".formError", function() {
-    showElem($(this),false);
-  });
-
-  //build arrow
+  //plugin variables 
   var arrowHtml = (function() {
     var i, a = [];
     a.push('<div class="formErrorArrow">');
@@ -57,39 +29,64 @@ $(function() {
     return a.join('');
   }());
 
+  var pluginOptions = {
+    // Auto-hide prompt
+    autoHidePrompt: false,
+    // Delay before auto-hide
+    autoHideDelay: 10000,
+    // Should display little arrow
+    showArrow: true,
+    // Animation methods
+    showAnimation: 'fadeIn',
+    hideAnimation: 'fadeOut', 
+    // Fade out duration while hiding the validations
+    animationDuration: 600,
+    // Gap between prompt and element
+    gap: 0
+    //TODO add z-index watches
+    //parents:  { '.ui-dialog': 5001 }
+  };
+
+  // plugin helpers
+  function CustomOptions(options){
+    $.extend(this, options);
+  }
+  CustomOptions.prototype = pluginOptions;
+
+
+  function create(tag) {
+    return $(document.createElement(tag));
+  }
+
+
   /**
   * Builds or updates a prompt with the given information
   */
-  function execPrompt(element, text, opts) {
+  function execPrompt(initialElement, text, userOptions) {
 
-    var fieldType = element.attr("type"),
-        field = getPromptField(element),
-        prompt = field.data("promptElement"),
-        showArrow = options.showArrow && fieldType !== 'radio',
+    var elementType = initialElement.attr("type"),
+        element = getPromptElement(initialElement),
+        prompt = element.data("promptElement"),
+        options = (prompt && prompt.data("promptOptions")) || new CustomOptions(userOptions),
+        showArrow = options.showArrow && elementType !== 'radio',
         content = null,
         arrow = null,
         type = null;
 
-    //apply options
-    if($.isPlainObject(opts)) {
-      type = opts.type;
-
-      if(opts.arrow) showArrow = opts.arrow;
-
-    } else {
-      type = opts;
-      opts = null;
+    //shortcut special case
+    if($.type(userOptions) === 'string') {
+      type = userOptions;
     }
 
     if(prompt &&!text)
-      return showElem(prompt, false); //hide
+      return showPrompt(prompt, false); //hide
     else if(!prompt &&!text)
-      return; //nothing to hide
+      return;
 
     //no prompt - build
     if(!prompt)
-      prompt = buildPrompt(field);
-
+      prompt = buildPrompt(element, options);
+    
     content = prompt.find('.formErrorContent:first');
     arrow = prompt.find('.formErrorArrow:first');
 
@@ -104,102 +101,87 @@ $(function() {
     else if (type === "load") prompt.addClass("blackPopup");
     else                     prompt.addClass("redPopup");
 
-    clearTimeout(field.data('promptTimer'));
+    clearTimeout(element.data('promptTimer'));
     if (options.autoHidePrompt) {
       var t = setTimeout(function(){
-        showElem(prompt,false);
+        showPrompt(prompt,false);
       }, options.autoHideDelay);
-      field.data('promptTimer', t);
+      element.data('promptTimer', t);
     }
 
-    showElem(prompt,true);
+    showPrompt(prompt,true);
 
-    return field;
+    return element;
   }
 
-  function create(tag) {
-    return $(document.createElement(tag));
-  }
+  //construct dom to represent prompt, done once
+  function buildPrompt(element, options) {
 
-  function buildPrompt(field) {
+    var promptWrapper = create('div').addClass("formErrorWrapper"),
+        prompt = create('div').addClass("formError"),
+        content = create('div').addClass("formErrorContent");
 
-      var promptWrapper = create('div').addClass("formErrorWrapper"),
-          prompt = create('div').addClass("formError"),
-          content = create('div').addClass("formErrorContent");
+    //cache in element
+    element.data("promptElement", prompt);
+    prompt.data("promptOptions", options);
 
-      promptWrapper.append(prompt);
+    promptWrapper.append(prompt);
 
-      if(field.parent().css('position') === 'relative') {
-        promptWrapper.css({position:'absolute'});
-      }
+    if(element.parent().css('position') === 'relative')
+      promptWrapper.css({position:'absolute'});
 
-      prompt.append($(arrowHtml));
+    prompt.append(arrowHtml);
+    prompt.append(content);
 
-      prompt.append(content);
+    //add into dom
+    element.before(promptWrapper);
+    prompt.css(calculateCSS(element, prompt));
 
-      //add into dom
-      field.before(promptWrapper);
-      //cache in field
-      field.data("promptElement", prompt);
-
-      var css = calculateCSS(field, prompt);
-      css.opacity = options.hiddenOpacity;
-      prompt.css(css);
-
-      return prompt;
+    return prompt;
   }
 
   //basic hide show
-  function showElem(elem, show) {
-    if(show) elem.show();
-    elem.stop().fadeTo(options.fadeDuration,
-      show ? options.shownOpacity : options.hiddenOpacity,
-      function() {
-        if(!show) elem.hide();
-      }
-    );
+  function showPrompt(element, show) {
+    if(show) element.show();
+
+    var options = element.data("promptOptions");
+
+    var method = show ? options.showAnimation : options.hideAnimation;
+    element.stop()[method](options.animationDuration, function() {
+      if(!show) element.hide();
+    });
   }
 
-  /**
-  *
-  */
-  function getPromptField(f) {
+  //gets first on n radios, and gets the fancy stylised input for hidden inputs
+  function getPromptElement(element) {
     //choose the first of n radios
-    if(f.is('[type=radio]')) {
-      var radios = f.parents("form:first").find('[type=radio]').filter(function(i,e) {
-        return $(e).attr('name') === f.attr('name');
+    if(element.is('[type=radio]')) {
+      var radios = element.parents("form:first").find('[type=radio]').filter(function(i,e) {
+        return $(e).attr('name') === element.attr('name');
       });
-      f = radios.first();
+      element = radios.first();
     }
 
     //custom-styled inputs - find thier real element
-    var fBefore = f.prev();
+    var fBefore = element.prev();
     if(fBefore.is('span.styled,span.OBS_checkbox'))
-      f = fBefore;
+      element = fBefore;
 
-    return f;
+    return element;
   }
 
   /**
   * Calculates prompt position
-  *
-  * @param {jqObject}
-  *            field
-  * @param {jqObject}
-  *            the prompt
-  * @param {Map}
-  *            options
-  * @return positions
   */
-  function calculateCSS(field, prompt) {
+  function calculateCSS(element, prompt) {
 
-    var fieldPosition = field.position(),
+    var elementPosition = element.position(),
         promptPosition = prompt.parent().position(),
-        height = field.outerHeight(),
-        left = fieldPosition.left - promptPosition.left;
+        height = element.outerHeight(),
+        left = elementPosition.left - promptPosition.left;
 
     if(!$.browser.msie)
-      height += (fieldPosition.top - promptPosition.top);
+      height += (elementPosition.top - promptPosition.top);
 
     return {
       top: height-2,
@@ -208,12 +190,20 @@ $(function() {
 
   }
 
+
+  //permanent hide listener
+  $(document).on("click", ".formError", function() {
+    showPrompt($(this),false);
+  });
+
   //public interface
   $.prompt = execPrompt;
-  $.prompt.setDefaults = setDefaults;
+  $.prompt.options = function(userOptions) {
+    $.extend(pluginOptions, userOptions);
+  };
 
   $.fn.prompt = function(text, opts) {
-    buildPrompt($(this), text, opts);
+    execPrompt($(this), text, opts);
   };
 
 });
@@ -414,10 +404,14 @@ var Set = Class.extend({
   find: function(obj) {
     for(var i = 0, l = this.array.length;i<l; ++i)
       if($.isFunction(obj) ?
-          obj(this.array[i]) :
-          this.equals(this.array[i],obj))
-        return this.array[i];
+          obj(this.get(i)) :
+          this.equals(this.get(i),obj))
+        return this.get(i);
     return null;
+  },
+
+  get: function(i) {
+    return this.array[i];
   },
   //truthy find
   has: function(item) {
@@ -442,8 +436,8 @@ var Set = Class.extend({
   remove: function(item) {
     var newSet = [];
     for(var i = 0, l = this.array.length; i<l; ++i)
-      if(!this.equals(this.array[i],item))
-        newSet.push(this.array[i]);
+      if(!this.equals(this.get(i),item))
+        newSet.push(this.get(i));
 
     this.array = newSet;
     return item;
@@ -459,7 +453,7 @@ var Set = Class.extend({
   },
   each: function(fn) {
     for(var i = 0, l = this.array.length; i<l; ++i)
-      fn(this.array[i]);
+      fn(this.get(i));
   },
   map: function(fn) {
     return $.map(this.array,fn);
@@ -487,6 +481,10 @@ var TypedSet = Set.extend({
   }
 });
 (function($) {
+
+  "use strict";
+
+  var VERSION = "1.0.0";
 
   /* ===================================== *
    * Debug helpers
@@ -684,7 +682,7 @@ var TypedSet = Set.extend({
    * Plugin Settings/Variables
    * ===================================== */
 
-  var defaultOptions = {
+  var globalOptions = {
 
     // Display log messages flag
     debug: false,
@@ -725,6 +723,19 @@ var TypedSet = Set.extend({
     }
   };
 
+  //option object creator inheriting from globals
+  function CustomOptions(opts) {
+    $.extend(true, this, opts);
+  }
+  CustomOptions.prototype = globalOptions;
+
+  //append to arguments[0]
+  function appendArg(args, expr) {
+      var a = [].slice.call(args, 0);
+      a[0] = expr + a[0];
+      return a;
+  }
+
   /* ===================================== *
    * Base Class
    * ===================================== */
@@ -741,20 +752,14 @@ var TypedSet = Set.extend({
     },
 
     log: function() {
-      if(!defaultOptions.debug) return;
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      log.apply(this, args);
+      if(!globalOptions.debug) return;
+      log.apply(this, appendArg(arguments, this.toString()));
     },
     warn: function() {
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      warn.apply(this, args);
+      warn.apply(this, appendArg(arguments, this.toString()));
     },
     info: function() {
-      var args = [].slice.call(arguments, 0);
-      args[0] = this.toString() + args[0];
-      info.apply(this, args);
+      info.apply(this, appendArg(arguments, this.toString()));
     },
 
     bind: function(name) {
@@ -777,18 +782,17 @@ var TypedSet = Set.extend({
   var ajaxCache = { loading: {}, loaded: {} } ;
 
   //callable from user defined rules. alias: r.ajax
-  function ajaxHelper(userOpts, ruleInterface) {
+  function ajaxHelper(userOpts, rule, ruleInterface, validationElem) {
 
     var defaults = {
-      method: "GET",
-      timeout: 15 * 1000
-    };
-
-    var promptContainer = ruleInterface.triggerField || ruleInterface.field;
-
-    var userSuccess = userOpts.success;
-    var userError   = userOpts.error;
-    var serialised = JSON ? JSON.stringify(userOpts) : guid();
+          method: "GET",
+          timeout: 15 * 1000
+        },
+        promptContainer = ruleInterface.triggerField || ruleInterface.field,
+        userSuccess = userOpts.success,
+        userError   = userOpts.error,
+        options = validationElem.options,
+        serialised = JSON ? JSON.stringify(userOpts) : guid();
 
     function onErrorDefault(e) {
       log("ajax error");
@@ -802,7 +806,11 @@ var TypedSet = Set.extend({
 
     //already completed
     if(ajaxCache.loaded[serialised]) {
-      userCallbacks.success.apply(this,ajaxCache.loaded[serialised]);
+
+      var args = ajaxCache.loaded[serialised],
+          success = userCallbacks.success;
+
+      success.apply(rule, args);
       return;
     }
 
@@ -814,14 +822,14 @@ var TypedSet = Set.extend({
 
     if(ajaxCache.loading[serialised].length !== 1) return;
 
-    defaultOptions.prompt(promptContainer, "Checking...", "load");
+    options.prompt(promptContainer, "Checking...", "load");
     
     function intercept() {
-      defaultOptions.prompt(promptContainer, false);
+      options.prompt(promptContainer, false);
 
       var reqs = ajaxCache.loading[serialised];
       while(reqs.length)
-        reqs.pop().success.apply(this,arguments);
+        reqs.pop().success.apply(rule,arguments);
       
       ajaxCache.loaded[serialised] = arguments;
     }
@@ -924,9 +932,6 @@ var TypedSet = Set.extend({
     //the 'this's in these interface mixins
     //refer to the rule 'r' object
     defaultInterface: {
-      ajax: function(userOpts) {
-        ajaxHelper(userOpts, this);
-      },
       log: log,
       warn: warn
     },
@@ -1335,7 +1340,8 @@ var TypedSet = Set.extend({
 
         this.rule = ruleParamObj.rule;
         this.params = ruleParamObj.params;
-        this.validationObj = this.parent.element;
+        this.validationElem = this.parent.element;
+        this.options = this.validationElem.options;
       },
 
       execute: function() {
@@ -1360,8 +1366,8 @@ var TypedSet = Set.extend({
         };
 
         //sanity checks
-        if(!this.validationObj || !rule.ready) {
-          this.warn(!this.validationObj ? 'invalid parent.' : 'not ready.');
+        if(!this.validationElem || !rule.ready) {
+          this.warn(!this.validationElem ? 'invalid parent.' : 'not ready.');
           callback();
           return d.promise();
         } else {
@@ -1375,24 +1381,30 @@ var TypedSet = Set.extend({
           callback("Timeout");
         }, 10000);
 
+
+        var currInterface = {};
+
         //find trigger field in a group execution
         var triggerField = null;
         if(this.parent instanceof GroupExecution)
-          triggerField = this.parent.triggerField();
+          currInterface.triggerField = this.parent.triggerField();
+
+        currInterface.field = this.validationElem.elem;
+        currInterface.form =  this.validationElem.form.elem;
+        currInterface.callback = callback;
+        currInterface.params = this.params;
+        currInterface.args = this.params;
+        currInterface.ajax = function(userOpts) {
+          ajaxHelper(userOpts, rule, currInterface, this.options);
+        };
 
         //build the rule interface 'r'
-        var ruleInterface = rule.buildInterface({
-          field: this.validationObj.elem,
-          triggerField: triggerField,
-          form: this.validationObj.form.elem,
-          callback: callback,
-          params: this.params,
-          args: this.params
-        });
+        var ruleInterface = rule.buildInterface(currInterface);
 
-        //execute validator
-        var result = rule.ready ? rule.fn(ruleInterface) : true;
-        //instant callback - allow sync calls
+        //finally execute validator
+        var result = rule.fn(ruleInterface);
+
+        //instant callback - becomes synchronous
         if(result !== undefined) callback(result);
 
         return d.promise();
@@ -1554,7 +1566,8 @@ var TypedSet = Set.extend({
         if(!elem.length) return;
         if(!elem.is("form")) return;
         if(!this._super(elem)) return;
-        this.extendOptions(options);
+
+        this.options = new CustomOptions(options);
 
         this.fields = new TypedSet(ValidationField);
         this.fieldsets = new TypedSet(ValidationGroup);
@@ -1572,16 +1585,10 @@ var TypedSet = Set.extend({
       },
 
       extendOptions: function(opts) {
-        if(!this.options)
-          this.options = {};
         $.extend(true, this.options, opts);
       },
 
       bindEvents: function() {
-
-        //delegate events
-        if(this.options.hideErrorOnChange)
-          this.elem.on("keyup.jqv", "input", this.onKeyup);
 
         this.elem
           .on("keyup.jqv", "input", this.onKeyup)
@@ -1593,7 +1600,7 @@ var TypedSet = Set.extend({
           .trigger("initialised.jqv");
 
         this.updateFields();
-        this.info("validation engine bound to " + this.fields.size() + " elems");
+        this.info("bound to " + this.fields.size() + " elems");
       },
 
       unbindEvents: function() {
@@ -1639,7 +1646,6 @@ var TypedSet = Set.extend({
 
         fieldset = this.fieldsets.find(fieldsetElem);
 
-        //fieldset not created yet, instantiate
         if(!fieldset) {
           fieldset = new ValidationGroup(fieldsetElem, this);
           this.fieldsets.add(fieldset);
@@ -1691,7 +1697,10 @@ var TypedSet = Set.extend({
       },
 
       onKeyup: function(event) {
-        this.options.prompt($(event.currentTarget),false);
+
+        if(this.options.hideErrorOnChange)
+          this.options.prompt($(event.currentTarget),false);
+
       },
 
       onValidate: function(event) {
@@ -1797,7 +1806,7 @@ var TypedSet = Set.extend({
     for(; i<l; ++i )
       fns[i]().done(pass).fail(fail);
 
-    return d;
+    return d.promise();
   };
 
   //allow programmatic validations
@@ -1806,10 +1815,10 @@ var TypedSet = Set.extend({
     if(validator)
       validator.validate(callback);
     else
-      warn("jQuery element does not have a validation engine attached");
+      warn("element does not have async validator attached");
   };
 
-  $.fn.validate.version = '3.0';
+  $.fn.validate.version = VERSION;
 
   $.fn.asyncValidator = function(userOptions) {
     return this.each(function(i) {
@@ -1818,7 +1827,7 @@ var TypedSet = Set.extend({
       var form = $.asyncValidator.forms.find($(this));
 
       //unbind and destroy form
-      if(userOptions === false) {
+      if(userOptions === false || userOptions === "destroy") {
         if(form) {
           form.unbindEvents();
           $.asyncValidator.forms.remove(form);
@@ -1826,14 +1835,10 @@ var TypedSet = Set.extend({
         return;
       }
 
-      //build options
-      var userValidationRules = userOptions;
-      var options = $.extend(true, {}, defaultOptions, userOptions);
-
       if(form) {
         form.extendOptions(userOptions);
       } else {
-        form = new ValidationForm($(this), options);
+        form = new ValidationForm($(this), userOptions);
         $.asyncValidator.forms.add(form);
       }
 
@@ -1844,21 +1849,32 @@ var TypedSet = Set.extend({
    * Plugin Public Interface
    * ===================================== */
 
-  $.asyncValidator = {
-    version: '3.0',
+  $.asyncValidator = function(options) {
+    $.extend(globalOptions, options);
+  };
+
+  $.extend($.asyncValidator, {
+    version: VERSION,
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     log: info,
     warn: warn,
-    defaults: defaultOptions,
+    defaults: globalOptions,
+    globals: globalOptions,
     utils: Utils,
     forms: new TypedSet(ValidationForm, [], "FormSet")
-  };
+  });
 
   /* ===================================== *
    * Plugin Initialiser
    * ===================================== */
 
+  $(function() {
+    console.log("run");
+    $("form").filter(function() {
+      return $(this).find("[data-validate]").length;
+    }).asyncValidator();
+  });
 
   log("plugin added.");
 
@@ -1867,7 +1883,7 @@ var TypedSet = Set.extend({
 (function($) {
 
   if($.asyncValidator === undefined) {
-    window.alert("Please include jquery.asyncValidator.js before each rule file");
+    window.alert("Please include jquery.async.validator.js before each rule file");
     return;
   }
 

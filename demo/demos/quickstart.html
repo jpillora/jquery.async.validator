@@ -1,20 +1,27 @@
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-
-    <script src="//raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js"></script>
-    <link href="//raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css"
-          rel="stylesheet" type="text/css" >
 <!-- 
-    <script src="../../dist/jquery.async.validator.prompt.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../../jquery.prompt/dist/jquery.prompt.css">
+Local Test
+<script src="../../dist/jquery.async.validator.prompt.min.js"></script>
+<link rel="stylesheet" type="text/css" href="../../../jquery.prompt/dist/jquery.prompt.css">
  -->
-     
-    <form>
-      <input value="42" data-validate="number"/>
-      <input value="abc" data-validate="number"/>
-      <input type="submit"/>
-    </form>
 
-    <script>
-      $("form").asyncValidator();
-    </script>
+<!-- jQuery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+<!-- jQuery Async Validator (with jQuery Prompt included) -->
+<script src="//raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js"></script>
+<!-- jQuery Prompt stylesheet -->
+<link href="//raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css"
+      rel="stylesheet" type="text/css" >
+ 
+<form>
+  <input value="42" data-validate="number"/>
+  <input value="abc" data-validate="number"/>
+  <input type="submit"/>
+</form>
+
+<script>
+  $(function() {
+    $("form").asyncValidator();
+  });
+</script>

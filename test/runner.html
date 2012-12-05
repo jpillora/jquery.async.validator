@@ -38,57 +38,51 @@
         "use strict";
 
         //define test names
-        var demosLoaded = 0;
-        var demos = [
-          'tests/ajax_spec.js.coffee',
-          'tests/basic_spec.js.coffee',
-          'tests/extending_spec.js.coffee',
-          'tests/group-adv_spec.js.coffee',
-          'tests/group-ajax_spec.js.coffee',
-          'tests/group-simple_spec.js.coffee',
-          'tests/validators_spec.js.coffee'
-        ];
 
-        //load each test
-        console.log("Begin loading tests...");
-        $.each(demos, function(i,url) {
+        var tests = null, testsLoaded = 0;
 
-          var evalResult = function(result) {
+        $.getJSON('specs.json', function(ts) {
+          tests = ts;
+          $.each(tests, runTest);
+        });
 
-            console.log("Loaded test: " + url);
-            var ext = url.substr(url.lastIndexOf('.')+1);
-
-            switch(ext) {
-              case "coffee":
-                CoffeeScript.eval(result);
-                break;
-              case "js":
-                eval(result);
-                break;
-              case "html":
-                $('body').append(result);
-                break;
-              default:
-                console.warn("Unsupported file: " + url);
-            }
-
-            if((++demosLoaded) === demos.length)
-              setTimeout( function() {
-                mocha.run();
-              },500);
-        
-            
-          };
-
+        function runTest(i,url) {
           $.ajax({ 
             type:'GET', 
             url: url,
-            success: evalResult
+            success: function(result) {
+              evalResult(result, url);
+            }
           });
+        }
 
-        });
+        function evalResult(result, url) {
 
-      });
+          console.log("Loaded test: " + url);
+          var ext = url.substr(url.lastIndexOf('.')+1);
+
+          switch(ext) {
+            case "coffee":
+              CoffeeScript.eval(result);
+              break;
+            case "js":
+              eval(result);
+              break;
+            case "html":
+              $('body').append(result);
+              break;
+            default:
+              console.warn("Unsupported file: " + url);
+          }
+
+          if((++testsLoaded) === tests.length)
+          setTimeout( function() {
+            mocha.run();
+          },500);
+
+        }
+
+      });//$ on ready
     </script>
 
   </head>

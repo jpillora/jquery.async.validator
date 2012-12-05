@@ -1,5 +1,15 @@
+var fs = require('fs');
+
 /*global module:false*/
 module.exports = function(grunt) {
+
+  //write out a manifest of all the tests
+  var tests = [];
+  fs.readdirSync('test/tests/').forEach(function(t) {
+    tests.push("tests/"+t);
+  });
+
+  fs.writeFileSync('test/specs.json', JSON.stringify(tests));
 
   //file lists
   var vanillaFiles = [
@@ -18,7 +28,7 @@ module.exports = function(grunt) {
 
     pkg: '<json:component.json>',
     meta: {
-      banner:   
+      banner:
         '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
         '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
@@ -59,7 +69,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: '<config:lint.files>',
-      tasks: 'lint'
+      tasks: 'default'
     },
     jshint: {
       options: {
@@ -75,6 +85,7 @@ module.exports = function(grunt) {
         browser: true
       },
       globals: {
+        require: true,
         jQuery: true,
         ParamParser: true,
         guid: true,
@@ -88,10 +99,14 @@ module.exports = function(grunt) {
       all: [ 'test/**/*.html' ]
     }
   });
-  
+
+  grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha');
 
   // Default task.
   grunt.registerTask('default', 'lint concat min mocha');
+  grunt.renameTask('watch', 'real-watch');
+  grunt.registerTask('watch', 'default real-watch');
+
 
 };

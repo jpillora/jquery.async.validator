@@ -1,7 +1,7 @@
 (function($) {
 
   if($.asyncValidator === undefined) {
-    window.alert("Please include jquery.asyncValidator.js before each rule file");
+    window.alert("Please include jquery.async.validator.js before each rule file");
     return;
   }
 
