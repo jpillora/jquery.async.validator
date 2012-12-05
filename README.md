@@ -10,7 +10,7 @@ Optionally includes another plugin - [jQuery prompt](http://www.github.com/jpill
 
 Full Documentation and Demos
 ---
-http://jpillora.github.com/jquery.async.validation/
+http://jpillora.github.com/jquery.async.validator/
 
 *Note: These docs are a work in progress.*
 
@@ -24,10 +24,11 @@ With `jquery.prompt`
 * [Stylesheet for jquery.prompt]
 
 Without `jquery.prompt`
-*Note You must implement your own `prompt` handler.*
 
 * [Development Version]
 * [Production Version]
+
+*Note: jQuery Async Validator will auto-initialise all forms that contain an element with `data-validate` attribute. So in this case no script is required.*
 
 Basic Usage
 ---
