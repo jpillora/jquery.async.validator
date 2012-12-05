@@ -1387,6 +1387,13 @@
    * Plugin Initialiser
    * ===================================== */
 
+  $(function() {
+    console.log("run");
+    $("form").filter(function() {
+      return $(this).find("[data-validate]").length;
+    }).asyncValidator();
+  });
+
   log("plugin added.");
 
 })(jQuery);

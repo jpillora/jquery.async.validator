@@ -1,6 +1,7 @@
 require.config({
   shim: {
-    '../dist/jquery.async.validator':     ['jquery']
+    '../dist/jquery.async.validator':             ['jquery'],
+    '../../jquery.prompt/dist/jquery.prompt':     ['jquery']
   }
 });
 
@@ -8,6 +9,8 @@ define([
   'util/log',
   'jquery',
   '../dist/jquery.async.validator',
+  '../../jquery.prompt/dist/jquery.prompt',
+  'css!../../jquery.prompt/dist/jquery.prompt',
   'underscore',
   'lib/prettify',
   'lib/bootstrap.min'],
@@ -15,7 +18,7 @@ define([
 
     function setCode(container, pre) {
 
-      if(!container.length === 0 || pre.length === 0) return;
+      if(container.length === 0 || pre.length === 0) return;
       var content = container.html();
       var lines = content.split('\n'), indentation;
 
@@ -113,7 +116,12 @@ define([
       window.prettyPrint();
 
       //intercept all form submissions
-      $("#demos").on("submit","form", function() {
+      var successElem = $('<div class="alert alert-success"><strong>'+
+        'Validation successful ! </strong> Submitting form...'+
+        '</div>');
+
+      $(document).on("submit","form", function() {
+        $(this).append(successElem.show().stop().delay(2000).fadeOut());
         return false;
       });
       

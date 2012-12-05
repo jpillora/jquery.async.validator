@@ -16,9 +16,11 @@ h3 {
   margin-top: 5px;
 }
 
-#app pre.prettyprint {
-  padding: 5px;
+#app pre, #app .demo div[data-html] {
+  padding: 15px;
+  margin: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
 }
 
 .demo {
@@ -26,6 +28,9 @@ h3 {
   margin-bottom: 50px;
 }
 
-.note {
+.alert {
+  margin: 10px;
+}
+.alert strong {
   font-style: italic;
 }
