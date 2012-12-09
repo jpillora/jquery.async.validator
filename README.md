@@ -4,13 +4,15 @@ v1.0.0
 
 Summary
 ---
-A jQuery plugin for fully customisable asynchronous client-side validations.
+A jQuery plugin to provide fully customisable asynchronous client-side validations.
 
 Optionally includes another plugin - [jQuery prompt](http://www.github.com/jpillora/jquery.prompt/) - for displaying coloured text prompts.
 
 Full Documentation and Demos
 ---
-http://jpillora.github.com/jquery.async.validator/
+
+Here:
+###http://jpillora.github.com/jquery.async.validator/
 
 *Note: These docs are a work in progress.*
 
@@ -48,12 +50,6 @@ Use the following HTML:
   <input value="abc" data-validate="number"/>
   <input type="submit"/>
 </form>
-
-<script>
-  $(function() {
-    $("form").asyncValidator();
-  });
-</script>
 ```
 
 Press *submit* and you should see:
@@ -81,7 +77,6 @@ Change Log
 v1.0.0
 
 * Released !
-
 
   [Development Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.js
   [Production Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js

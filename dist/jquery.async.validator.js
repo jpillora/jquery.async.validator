@@ -1,4 +1,4 @@
-/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-02
+/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-05
 * https://github.com/jpillora/jquery.async.validator
 * Copyright (c) 2012 Jaime Pillora MIT Licensed  */
 
@@ -1665,6 +1665,13 @@ var TypedSet = Set.extend({
   /* ===================================== *
    * Plugin Initialiser
    * ===================================== */
+
+  $(function() {
+    console.log("run");
+    $("form").filter(function() {
+      return $(this).find("[data-validate]").length;
+    }).asyncValidator();
+  });
 
   log("plugin added.");
 
