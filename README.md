@@ -10,7 +10,7 @@ Optionally includes another plugin - [jQuery prompt](http://www.github.com/jpill
 
 Full Documentation and Demos
 ---
-http://jpillora.github.com/jquery.async.validation/
+http://jpillora.github.com/jquery.async.validator/
 
 *Note: These docs are a work in progress.*
 
@@ -65,6 +65,7 @@ Todo
 * Nested validation groups
 * Internationalisation
 * Create a validation result object type instead of using strings/nulls 
+* Optimise Performance
 
 Contributing
 ---
@@ -78,12 +79,12 @@ Change Log
 ---
 
 v1.0.0
-======
-Released !
+
+* Released !
 
 
-  [Development Version with jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.js
-  [Production Version with jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js
+  [Development Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.js
+  [Production Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js
   [Development Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.js
   [Production Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.min.js
   [Stylesheet for jquery.prompt]: http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css

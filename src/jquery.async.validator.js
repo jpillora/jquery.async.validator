@@ -1384,8 +1384,13 @@
   });
 
   /* ===================================== *
-   * Plugin Initialiser
+   * Auto attach on DOM ready
    * ===================================== */
+  $(function() {
+    $("form").filter(function() {
+      return $(this).find("[data-validate]").length; 
+    }).asyncValidator();
+  });
 
   log("plugin added.");
 
