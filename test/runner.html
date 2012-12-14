@@ -17,9 +17,6 @@
 
       mocha.setup('bdd');
 
-      console.info("Enter file");
-
-
       afterEach(function() {
         $("#konacha").empty();
       })
@@ -63,10 +60,20 @@
 
           switch(ext) {
             case "coffee":
-              CoffeeScript.eval(result);
+              try {
+                CoffeeScript.eval(result);
+              } catch(e) {
+                console.error(e);
+                return;
+              } 
               break;
             case "js":
-              eval(result);
+              try {
+                eval(result);
+              } catch(e) {
+                console.error(e);
+                return;
+              }
               break;
             case "html":
               $('body').append(result);
@@ -78,7 +85,7 @@
           if((++testsLoaded) === tests.length)
           setTimeout( function() {
             mocha.run();
-          },500);
+          },300);
 
         }
 

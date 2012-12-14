@@ -8,7 +8,7 @@
    * Debug helpers
    * ===================================== */
 
-  var cons = $.console({ prefix: 'asyncValidator: ' }),
+  var cons = $.consoleNoConflict({ prefix: 'asyncValidator: ' }),
       log  = cons.log,
       warn = cons.warn,
       info = cons.info;
@@ -1388,9 +1388,8 @@
    * ===================================== */
 
   $(function() {
-    console.log("run");
     $("form").filter(function() {
-      return $(this).find("[data-validate]").length;
+      return $(this).find("[data-validate]").length > 0;
     }).asyncValidator();
   });
 

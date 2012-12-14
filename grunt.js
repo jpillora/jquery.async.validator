@@ -1,4 +1,5 @@
-var fs = require('fs');
+var fs = require('fs'),
+    fetchUrl = require('fetch').fetchUrl;
 
 /*global module:false*/
 module.exports = function(grunt) {
@@ -8,12 +9,11 @@ module.exports = function(grunt) {
   fs.readdirSync('test/tests/').forEach(function(t) {
     tests.push("tests/"+t);
   });
-
   fs.writeFileSync('test/specs.json', JSON.stringify(tests));
 
   //file lists
   var vanillaFiles = [
-    '<file_strip_banner:src/helper/jquery.console.js>',
+    '<file_strip_banner:src/vendor/jquery.console.js>',
     '<file_strip_banner:src/helper/guid.js>',
     '<file_strip_banner:src/helper/param-parser.js>',
     '<file_strip_banner:src/helper/resig-class.js>',
@@ -39,16 +39,28 @@ module.exports = function(grunt) {
       footer:
         '}());'
     },
+    webget: {
+      prompt: {
+        src: 'http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.js',
+        dest: 'src/vendor/jquery.prompt.js'
+      },
+      console: {
+        src: 'https://raw.github.com/jpillora/jquery.console/master/jquery.console.js',
+        dest: 'src/vendor/jquery.console.js'
+      }
+    },
     concat: {
       vanilla: {
-        src: ['<banner:meta.banner>','<banner:meta.header>'].
+        src: ['<banner:meta.banner>',
+              '<banner:meta.header>'].
               concat(vanillaFiles).
               concat(['<banner:meta.footer>']),
         dest: 'dist/<%= pkg.name %>.js'
       },
       includePrompt: {
-        src: ['<banner:meta.banner>','<banner:meta.header>',
-               '<file_strip_banner:../jquery.prompt/dist/jquery.prompt.js>'
+        src: ['<banner:meta.banner>',
+              '<banner:meta.header>',
+               '<file_strip_banner:src/vendor/jquery.prompt.js>'
               ].concat(vanillaFiles).
               concat(['<banner:meta.footer>']),
         dest: 'dist/<%= pkg.name %>.prompt.js'
@@ -103,8 +115,28 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha');
 
+  // Fetcher task
+  grunt.registerMultiTask('webget', 'Web get stuff.', function() {
+    var done = this.async(),
+        name = this.target,
+        src = this.data.src,
+        dest = this.data.dest;
+
+    grunt.log.writeln("Web Getting: '" + name + "'");
+    fetchUrl(src, function(error, meta, body) {
+      if(error) {
+        grunt.log.writeln("Error: '" + error + "'");
+        done(false);
+        return;
+      }
+      grunt.log.writeln("Saved: '" + src + "' as '" + dest + "'");
+      fs.writeFileSync(dest, body);
+      done(true);
+    });
+  });
+
   // Default task.
-  grunt.registerTask('default', 'lint concat min mocha');
+  grunt.registerTask('default', 'lint webget concat min mocha');
   grunt.renameTask('watch', 'real-watch');
   grunt.registerTask('watch', 'default real-watch');
 

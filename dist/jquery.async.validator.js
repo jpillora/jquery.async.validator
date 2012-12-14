@@ -1,22 +1,23 @@
-/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-05
+/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-14
 * https://github.com/jpillora/jquery.async.validator
 * Copyright (c) 2012 Jaime Pillora MIT Licensed  */
 
 
 (function() {
 
+if(window.console === undefined)
+  window.console = { isFake: true };
+
+if(window.console === undefined)
+  window.console = { isFake: true };
+var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
+for (var i = fns.length - 1; i >= 0; i--)
+  if(window.console[fns[i]] === undefined)
+    window.console[fns[i]] = $.noop;
+
 (function($) {
-
-  if(window.console === undefined)
-    window.console = { isFake: true };
-
-  fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
-  for (var i = fns.length - 1; i >= 0; i--) {
-    var f = fns[i];
-    if(window.console[f] === undefined)
-      window.console[f] = $.noop;
-  }
-
+  if(!$) return;
+  
   var I = function(i){ return i; };
 
   function log() {
@@ -43,13 +44,13 @@
     var grp = $.type(a[a.length-1]) === 'boolean' ? a.pop() : null;
 
     //if(a[0]) a[0] = getName(this) + a[0];
-    if(grp === true) console.group(a[0]);
+    if(grp === true) window.console.group(a[0]);
     if(a[0] && grp === null)
       if($.browser.msie)
-        console.log(a.join(','));
+        window.console.log(a.join(','));
       else
-        console[type].apply(console, a);
-    if(grp === false) console.groupEnd();
+        window.console[type].apply(window.console, a);
+    if(grp === false) window.console.groupEnd();
   }
 
   function withOptions(opts) {
@@ -57,21 +58,26 @@
       log:  function() { log.apply(opts, arguments); },
       warn: function() { warn.apply(opts, arguments); },
       info: function() { info.apply(opts, arguments); }
-    }
+    };
   }
 
-  $.console = function(opts) {
-    opts = $.extend({}, $.console.defaults, opts);
+  var console = function(opts) {
+    opts = $.extend({}, console.defaults, opts);
     return withOptions(opts);
   };
 
-  $.console.defaults = {
+  console.defaults = {
     suppressLog: false,
     prefix: '',
     postfix: ''
   };
 
-  $.extend($.console, withOptions($.console.defaults));
+  $.extend(console, withOptions(console.defaults));
+
+  if($.console === undefined)
+    $.console = console;
+  
+  $.consoleNoConflict = console;
 
 }(jQuery));
 
@@ -287,7 +293,7 @@ var TypedSet = Set.extend({
    * Debug helpers
    * ===================================== */
 
-  var cons = $.console({ prefix: 'asyncValidator: ' }),
+  var cons = $.consoleNoConflict({ prefix: 'asyncValidator: ' }),
       log  = cons.log,
       warn = cons.warn,
       info = cons.info;
@@ -1667,9 +1673,8 @@ var TypedSet = Set.extend({
    * ===================================== */
 
   $(function() {
-    console.log("run");
     $("form").filter(function() {
-      return $(this).find("[data-validate]").length;
+      return $(this).find("[data-validate]").length > 0;
     }).asyncValidator();
   });
 
