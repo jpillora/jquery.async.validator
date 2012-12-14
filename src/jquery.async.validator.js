@@ -232,9 +232,9 @@
     //tracking method
     track: $.noop,
     //prompt method,
-    prompt: function(element, text) {
+    prompt: function(element, text, opts) {
       if($.type($.prompt) === 'function')
-        $.prompt(element, text);
+        $.prompt(element, text, opts);
     }
   };
 
@@ -549,6 +549,7 @@
         this.log('done: ' + result);
         this.status = this.STATUS.COMPLETE;
 
+        //TODO fill the errors array per execution
         // if(!!result)
         //   this.errors.push({elem: this.element, msg: result});
 

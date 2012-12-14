@@ -4,7 +4,7 @@
     window.alert("Please include jquery.async.validator.js before each rule file");
     return;
   }
-
+  
   /* Field validation rules.
    * - must be in the form:
    *    <VALIDATOR_NAME>: {

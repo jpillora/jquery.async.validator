@@ -50,7 +50,8 @@ $(function() {
 
   // plugin helpers
   function CustomOptions(options){
-    $.extend(this, options);
+    if($.isPlainObject(options))
+      $.extend(this, options);
   }
   CustomOptions.prototype = pluginOptions;
 
@@ -83,6 +84,8 @@ $(function() {
     //shortcut special case
     if($.type(userOptions) === 'string') {
       type = userOptions;
+    } else if (options.type) {
+      type = options.type;
     }
 
     if(prompt && !text) {
@@ -736,9 +739,9 @@ var TypedSet = Set.extend({
     //tracking method
     track: $.noop,
     //prompt method,
-    prompt: function(element, text) {
+    prompt: function(element, text, opts) {
       if($.type($.prompt) === 'function')
-        $.prompt(element, text);
+        $.prompt(element, text, opts);
     }
   };
 
@@ -1053,6 +1056,7 @@ var TypedSet = Set.extend({
         this.log('done: ' + result);
         this.status = this.STATUS.COMPLETE;
 
+        //TODO fill the errors array per execution
         // if(!!result)
         //   this.errors.push({elem: this.element, msg: result});
 
@@ -1919,7 +1923,7 @@ var TypedSet = Set.extend({
     window.alert("Please include jquery.async.validator.js before each rule file");
     return;
   }
-
+  
   /* Field validation rules.
    * - must be in the form:
    *    <VALIDATOR_NAME>: {
