@@ -42,7 +42,7 @@ describe "Group validation (Advanced)", ->
     it "field validator 'number' should fail (group 'after' validator 'sumTo10' should not run yet)", ->
       form.find("input:first").val "X"
       form.validate (result) ->
-        expect(result).to.have.string "number"
+        expect(result).to.have.string "digit"
 
     it "group 'after' validator 'sumTo10' should be reached and fail", ->
       #make invalid

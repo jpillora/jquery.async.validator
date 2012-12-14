@@ -28,6 +28,17 @@ module.exports = function(grunt) {
 
     pkg: '<json:component.json>',
     meta: {
+      pipeline:
+        '//= require helper/json2\n'+
+        '//= require helper/json2\n'+
+        '//= require helper/resig-class\n'+
+        '//= require helper/set\n'+
+        '//= require helper/typedset\n'+
+        '//= require helper/param-parser\n'+
+        '//= require jquery.prompt\n'+
+        '//= require jquery.console\n'+
+        '//= require_self\n'+
+        '//= require_directory ./<%= pkg.name %>\n',
       banner:
         '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
@@ -64,6 +75,12 @@ module.exports = function(grunt) {
               ].concat(vanillaFiles).
               concat(['<banner:meta.footer>']),
         dest: 'dist/<%= pkg.name %>.prompt.js'
+      },
+      pipeline: {
+        src: ['<banner:meta.pipeline>',
+              '<banner:meta.banner>',
+              '<file_strip_banner:src/<%= pkg.name %>.js>'],
+        dest: 'dist/pipeline/<%= pkg.name %>.js'
       }
     },
     min: {
@@ -109,10 +126,18 @@ module.exports = function(grunt) {
     },
     mocha: {
       all: [ 'test/**/*.html' ]
+    },
+    copy: {
+      dist: {
+        files: {
+          "src": "/Users/jpillora/tmp/"
+        }
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-mocha');
 
   // Fetcher task
@@ -139,6 +164,6 @@ module.exports = function(grunt) {
   grunt.registerTask('default', 'lint webget concat min mocha');
   grunt.renameTask('watch', 'real-watch');
   grunt.registerTask('watch', 'default real-watch');
-
+  grunt.registerTask('rails', 'default copy');
 
 };

@@ -5,7 +5,7 @@
 
 (function() {
 
-/*! jQuery Prompt - v1.0.0 - 2012-12-10
+/*! jQuery Prompt - v1.0.0 - 2012-12-14
 * https://github.com/jpillora/jquery.prompt
 * Copyright (c) 2012 Jaime Pillora; Licensed MIT */
 
@@ -40,7 +40,8 @@ $(function() {
     showAnimation: 'fadeIn',
     hideAnimation: 'fadeOut',
     // Fade out duration while hiding the validations
-    animationDuration: 600,
+    showDuration: 200,
+    hideDuration: 600,
     // Gap between prompt and element
     gap: 0
     //TODO add z-index watches
@@ -123,12 +124,13 @@ $(function() {
   function buildPrompt(element, options) {
 
     var promptWrapper = create('div').addClass("formErrorWrapper"),
-        prompt = create('div').addClass("formError"),
+        prompt = create('div').addClass("formError").hide(),
         content = create('div').addClass("formErrorContent");
 
     //cache in element
     element.data("promptElement", prompt);
     prompt.data("promptOptions", options);
+    prompt.data("parentElement", element);
 
     promptWrapper.append(prompt);
 
@@ -145,16 +147,23 @@ $(function() {
     return prompt;
   }
 
-  //basic hide show
-  function showPrompt(element, show) {
-    if(show) element.show();
 
-    var options = element.data("promptOptions");
+  function showPrompt(prompt, show) {
+    var hidden = prompt.data("parentElement").parents(":hidden").length > 0,
+        options = prompt.data("promptOptions");
 
-    var method = show ? options.showAnimation : options.hideAnimation;
-    element.stop()[method](options.animationDuration, function() {
-      if(!show) element.hide();
-    });
+    if (hidden && show) {
+      prompt.show();
+    }
+    if (hidden && !show) {
+      prompt.hide();
+    }
+    if (!hidden && show) {
+      prompt[options.showAnimation](options.showDuration);
+    }
+    if (!hidden && !show) {
+      return prompt[options.hideAnimation](options.hideDuration);
+    }
   }
 
   //gets first on n radios, and gets the fancy stylised input for hidden inputs
@@ -214,17 +223,18 @@ $(function() {
 
 });
 
-if(window.console === undefined)
-  window.console = { isFake: true };
-
-if(window.console === undefined)
-  window.console = { isFake: true };
-var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
-for (var i = fns.length - 1; i >= 0; i--)
-  if(window.console[fns[i]] === undefined)
-    window.console[fns[i]] = $.noop;
-
 (function($) {
+
+  if(window.console === undefined)
+    window.console = { isFake: true };
+
+  if(window.console === undefined)
+    window.console = { isFake: true };
+  var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
+  for (var i = fns.length - 1; i >= 0; i--)
+    if(window.console[fns[i]] === undefined)
+      window.console[fns[i]] = $.noop;
+
   if(!$) return;
   
   var I = function(i){ return i; };
@@ -345,7 +355,7 @@ var ParamParser = (function() {
 (function(){
   var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
   // The base Class implementation (does nothing)
-  this.Class = function(){};
+  window.Class = function(){};
   
   // Create a new Class that inherits from this class
   Class.extend = function(prop) {
@@ -620,9 +630,6 @@ var TypedSet = Set.extend({
     //getElementRules
     getElementRulesAndParams = function(validationElem) {
 
-      if(!validationElem || !(validationElem instanceof Class))
-        return warn("cannot get rules from non class");
-
       var required = false,
           type = null,
           rules = [];
@@ -706,7 +713,7 @@ var TypedSet = Set.extend({
     validationEventTrigger: "blur",
 
     // Automatically scroll viewport to the first error
-    scroll: false,
+    scroll: true,
 
     // Focus on the first input
     focusFirstField: true,
@@ -1010,6 +1017,7 @@ var TypedSet = Set.extend({
         this.parent = parent;
         this.name = guid();
         this.status = this.STATUS.NOT_STARTED;
+        this.errors = [];
         this.bindAll();
       },
 
@@ -1044,6 +1052,10 @@ var TypedSet = Set.extend({
         this.log('', false);
         this.log('done: ' + result);
         this.status = this.STATUS.COMPLETE;
+
+        // if(!!result)
+        //   this.errors.push({elem: this.element, msg: result});
+
       },
 
       skipValidations: function() {
@@ -1069,7 +1081,6 @@ var TypedSet = Set.extend({
       init: function(form) {
         this._super(form);
 
-        this.errors = [];
         this.ajaxs = [];
 
         //set groups
@@ -1207,6 +1218,8 @@ var TypedSet = Set.extend({
         var elem = this.triggerField();
         if(!elem) elem = this.element.fields.array[0] && this.element.fields.array[0].elem;
         if(elem) opts.prompt(elem, result);
+
+
 
         if(this.parent instanceof FieldExecution)
           this.parent.element.options.track(
@@ -1377,9 +1390,11 @@ var TypedSet = Set.extend({
             d.reject(result);
         };
 
+        var validationElem = this.validationElem;
+
         //sanity checks
-        if(!this.validationElem || !rule.ready) {
-          this.warn(!this.validationElem ? 'invalid parent.' : 'not ready.');
+        if(!validationElem || !rule.ready) {
+          this.warn(!validationElem ? 'invalid parent.' : 'not ready.');
           callback();
           return d.promise();
         } else {
@@ -1401,13 +1416,15 @@ var TypedSet = Set.extend({
         if(this.parent instanceof GroupExecution)
           currInterface.triggerField = this.parent.triggerField();
 
-        currInterface.field = this.validationElem.elem;
-        currInterface.form =  this.validationElem.form.elem;
+
+
+        currInterface.field = validationElem.elem;
+        currInterface.form =  validationElem.form.elem;
         currInterface.callback = callback;
         currInterface.params = this.params;
         currInterface.args = this.params;
         currInterface.ajax = function(userOpts) {
-          ajaxHelper(userOpts, rule, currInterface, this.options);
+          ajaxHelper(userOpts, rule, currInterface, validationElem);
         };
 
         //build the rule interface 'r'
@@ -1626,7 +1643,7 @@ var TypedSet = Set.extend({
         // this.print();
         // this.log(null, false);
       },
-
+      
       //creates new validation elements
       //adds them to the form
       updateField: function(i, elem) {
@@ -1634,7 +1651,7 @@ var TypedSet = Set.extend({
         if(elem.jquery === undefined)
           elem = $(elem);
 
-        var fieldSelector = "input,select,textarea",
+        var fieldSelector = "input:not([type=hidden]),select,textarea",
             field, fieldElem, fieldset, fieldsetElem;
 
         if(elem.is(fieldSelector))
@@ -1878,8 +1895,13 @@ var TypedSet = Set.extend({
   });
 
   /* ===================================== *
-   * Plugin Initialiser
+   * Auto attach on DOM ready
    * ===================================== */
+  $(function() {
+    $("form").filter(function() {
+      return $(this).find("[data-validate]").length; 
+    }).asyncValidator();
+  });
 
   $(function() {
     $("form").filter(function() {
@@ -1935,7 +1957,7 @@ var TypedSet = Set.extend({
     },
     alphanumeric: {
       regex: /^[0-9A-Za-z]+$/,
-      message: "Use numbers and letters only"
+      message: "Use digits and letters only"
     },
     street_number: {
       regex: /^\d+[A-Za-z]?(-\d+)?[A-Za-z]?$/,
@@ -1943,11 +1965,11 @@ var TypedSet = Set.extend({
     },
     number: {
       regex: /^\d+$/,
-      message: "Use numbers only"
+      message: "Use digits only"
     },
     numberSpace: {
       regex: /^[\d\ ]+$/,
-      message: "Use numbers and spaces only"
+      message: "Use digits and spaces only"
     },
     postcode: {
       regex: /^\d{4}$/,
@@ -2021,13 +2043,14 @@ var TypedSet = Set.extend({
 
     },
     phone: function(r) {
+      r.val(r.val().replace(/\D/g,''));
       var v = r.val();
       if(!v.match(/^[\d\s]+$/))
-        return "Use numbers and spaces only";
+        return "Use digits and spaces only";
       if(!v.match(/^0/))
         return "Number must start with 0";
       if(v.replace(/\s/g,"").length !== 10)
-        return "Must be 10 numbers long";
+        return "Must be 10 digits long";
       return true;
     },
     size: function(r){

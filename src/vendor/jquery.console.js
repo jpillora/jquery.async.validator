@@ -5,17 +5,18 @@
  * @author Jaime Pillora
  * ===================================== */
 
-if(window.console === undefined)
-  window.console = { isFake: true };
-
-if(window.console === undefined)
-  window.console = { isFake: true };
-var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
-for (var i = fns.length - 1; i >= 0; i--)
-  if(window.console[fns[i]] === undefined)
-    window.console[fns[i]] = $.noop;
-
 (function($) {
+
+  if(window.console === undefined)
+    window.console = { isFake: true };
+
+  if(window.console === undefined)
+    window.console = { isFake: true };
+  var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
+  for (var i = fns.length - 1; i >= 0; i--)
+    if(window.console[fns[i]] === undefined)
+      window.console[fns[i]] = $.noop;
+
   if(!$) return;
   
   var I = function(i){ return i; };

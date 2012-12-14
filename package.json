@@ -4,6 +4,7 @@
   "dependencies": [
     "grunt-contrib-uglify",
     "grunt-contrib-watch",
+    "grunt-contrib-copy",
     "fetch",
     "grunt-mocha"
   ]

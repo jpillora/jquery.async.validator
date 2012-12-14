@@ -42,7 +42,7 @@
     },
     alphanumeric: {
       regex: /^[0-9A-Za-z]+$/,
-      message: "Use numbers and letters only"
+      message: "Use digits and letters only"
     },
     street_number: {
       regex: /^\d+[A-Za-z]?(-\d+)?[A-Za-z]?$/,
@@ -50,11 +50,11 @@
     },
     number: {
       regex: /^\d+$/,
-      message: "Use numbers only"
+      message: "Use digits only"
     },
     numberSpace: {
       regex: /^[\d\ ]+$/,
-      message: "Use numbers and spaces only"
+      message: "Use digits and spaces only"
     },
     postcode: {
       regex: /^\d{4}$/,
@@ -128,13 +128,14 @@
 
     },
     phone: function(r) {
+      r.val(r.val().replace(/\D/g,''));
       var v = r.val();
       if(!v.match(/^[\d\s]+$/))
-        return "Use numbers and spaces only";
+        return "Use digits and spaces only";
       if(!v.match(/^0/))
         return "Number must start with 0";
       if(v.replace(/\s/g,"").length !== 10)
-        return "Must be 10 numbers long";
+        return "Must be 10 digits long";
       return true;
     },
     size: function(r){

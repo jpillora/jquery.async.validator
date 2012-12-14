@@ -126,9 +126,6 @@
     //getElementRules
     getElementRulesAndParams = function(validationElem) {
 
-      if(!validationElem || !(validationElem instanceof Class))
-        return warn("cannot get rules from non class");
-
       var required = false,
           type = null,
           rules = [];
@@ -212,7 +209,7 @@
     validationEventTrigger: "blur",
 
     // Automatically scroll viewport to the first error
-    scroll: false,
+    scroll: true,
 
     // Focus on the first input
     focusFirstField: true,
@@ -516,6 +513,7 @@
         this.parent = parent;
         this.name = guid();
         this.status = this.STATUS.NOT_STARTED;
+        this.errors = [];
         this.bindAll();
       },
 
@@ -550,6 +548,10 @@
         this.log('', false);
         this.log('done: ' + result);
         this.status = this.STATUS.COMPLETE;
+
+        // if(!!result)
+        //   this.errors.push({elem: this.element, msg: result});
+
       },
 
       skipValidations: function() {
@@ -575,7 +577,6 @@
       init: function(form) {
         this._super(form);
 
-        this.errors = [];
         this.ajaxs = [];
 
         //set groups
@@ -713,6 +714,8 @@
         var elem = this.triggerField();
         if(!elem) elem = this.element.fields.array[0] && this.element.fields.array[0].elem;
         if(elem) opts.prompt(elem, result);
+
+
 
         if(this.parent instanceof FieldExecution)
           this.parent.element.options.track(
@@ -883,9 +886,11 @@
             d.reject(result);
         };
 
+        var validationElem = this.validationElem;
+
         //sanity checks
-        if(!this.validationElem || !rule.ready) {
-          this.warn(!this.validationElem ? 'invalid parent.' : 'not ready.');
+        if(!validationElem || !rule.ready) {
+          this.warn(!validationElem ? 'invalid parent.' : 'not ready.');
           callback();
           return d.promise();
         } else {
@@ -907,13 +912,15 @@
         if(this.parent instanceof GroupExecution)
           currInterface.triggerField = this.parent.triggerField();
 
-        currInterface.field = this.validationElem.elem;
-        currInterface.form =  this.validationElem.form.elem;
+
+
+        currInterface.field = validationElem.elem;
+        currInterface.form =  validationElem.form.elem;
         currInterface.callback = callback;
         currInterface.params = this.params;
         currInterface.args = this.params;
         currInterface.ajax = function(userOpts) {
-          ajaxHelper(userOpts, rule, currInterface, this.options);
+          ajaxHelper(userOpts, rule, currInterface, validationElem);
         };
 
         //build the rule interface 'r'
@@ -1132,7 +1139,7 @@
         // this.print();
         // this.log(null, false);
       },
-
+      
       //creates new validation elements
       //adds them to the form
       updateField: function(i, elem) {
@@ -1140,7 +1147,7 @@
         if(elem.jquery === undefined)
           elem = $(elem);
 
-        var fieldSelector = "input,select,textarea",
+        var fieldSelector = "input:not([type=hidden]),select,textarea",
             field, fieldElem, fieldset, fieldsetElem;
 
         if(elem.is(fieldSelector))
