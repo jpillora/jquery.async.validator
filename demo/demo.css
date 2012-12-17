@@ -8,7 +8,7 @@ body {
   display: none;
 }
 
-h3 {
+h3,h5 {
   text-decoration: underline;
 }
 
