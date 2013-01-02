@@ -10,7 +10,6 @@ define([
   'jquery',
   '../dist/jquery.async.validator',
   '../../jquery.prompt/dist/jquery.prompt',
-  'css!../../jquery.prompt/dist/jquery.prompt',
   'underscore',
   'lib/prettify',
   'lib/bootstrap.min'],

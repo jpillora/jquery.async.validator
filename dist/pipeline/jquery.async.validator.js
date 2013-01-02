@@ -10,9 +10,9 @@
 //= require_directory ./jquery.async.validator
 
 
-/*! jQuery Asynchronous Validator - v1.0.0 - 2012-12-14
+/*! jQuery Asynchronous Validator - v1.0.0 - 2013-01-02
 * https://github.com/jpillora/jquery.async.validator
-* Copyright (c) 2012 Jaime Pillora MIT Licensed  */
+* Copyright (c) 2013 Jaime Pillora MIT Licensed  */
 
 
 (function($) {

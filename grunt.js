@@ -52,11 +52,11 @@ module.exports = function(grunt) {
     },
     webget: {
       prompt: {
-        src: 'http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.js',
+        src: 'http://raw.github.com/jpillora/jquery.prompt/gh-pages/dist/jquery.prompt.js',
         dest: 'src/vendor/jquery.prompt.js'
       },
       console: {
-        src: 'https://raw.github.com/jpillora/jquery.console/master/jquery.console.js',
+        src: 'http://raw.github.com/jpillora/jquery.console/master/jquery.console.js',
         dest: 'src/vendor/jquery.console.js'
       }
     },

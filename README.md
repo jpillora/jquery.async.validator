@@ -42,10 +42,8 @@ Use the following HTML:
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 
 <!-- jQuery Async Validator (with jQuery Prompt included) -->
-<script src="//raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js"></script>
-<!-- jQuery Prompt stylesheet -->
-<link href="//raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css" rel="stylesheet" type="text/css" >
- 
+<script src="//raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.min.js"></script>
+
 <form>
   <input value="42" data-validate="number"/>
   <input value="abc" data-validate="number"/>
@@ -55,7 +53,7 @@ Use the following HTML:
 
 Press *submit* and you should see:
 
-![basic usage result](//raw.github.com/jpillora/jquery.async.validator/master/demo/demos/quickstart.png)
+![basic usage result](//raw.github.com/jpillora/jquery.async.validator/gh-pages/demo/demos/quickstart.png)
 
 Todo
 ---
@@ -79,11 +77,11 @@ v1.0.0
 
 * Released !
 
-  [Development Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.js
-  [Production Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.prompt.min.js
-  [Development Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.js
-  [Production Version]: http://raw.github.com/jpillora/jquery.async.validator/master/dist/jquery.async.validator.min.js
-  [Stylesheet for jquery.prompt]: http://raw.github.com/jpillora/jquery.prompt/master/dist/jquery.prompt.css
+  [Development Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.js
+  [Production Version including jquery.prompt]: http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.min.js
+  [Development Version]: http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.js
+  [Production Version]: http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.min.js
+  [Stylesheet for jquery.prompt]: http://raw.github.com/jpillora/jquery.prompt/gh-pages/dist/jquery.prompt.css
 
 
 
