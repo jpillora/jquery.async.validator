@@ -23,7 +23,6 @@ With `jquery.prompt`
 
 * [Development Version including jquery.prompt]
 * [Production Version including jquery.prompt]
-* [Stylesheet for jquery.prompt]
 
 Without `jquery.prompt`
 
