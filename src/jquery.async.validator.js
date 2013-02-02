@@ -597,7 +597,7 @@
 
       executed: function(result) {
         this._super(result);
-        this.element.info('result: ' + (result===undefined ? 'Passed' : 'Failed: ' + result));
+        this.element.log('result: ' + (result===undefined ? 'Passed' : 'Failed: ' + result));
         this.domElem.triggerHandler("validated", arguments);
       }
 
@@ -1126,7 +1126,7 @@
           .trigger("initialised.jqv");
 
         this.updateFields();
-        this.info("bound to " + this.fields.size() + " elems");
+        this.log("bound to " + this.fields.size() + " elems");
       },
 
       unbindEvents: function() {
@@ -1274,9 +1274,9 @@
   })();
 
   $.fn.scrollView = function(onComplete) {
-    return this.each(function() {
-
-      var field = $(this);
+    
+    var field = $(this).first();
+    if(field.length === 1) {
       if(field.is(".styled")) field = field.siblings("span");
       $('html, body').animate({
           scrollTop: Math.max(0,field.offset().top - 100)
@@ -1284,8 +1284,9 @@
           duration: 1000,
           complete: onComplete || $.noop
       });
+    }
 
-    });
+    return $(this);
   };
 
   $.fn.equals = function(that) {
@@ -1381,6 +1382,7 @@
 
   $.extend($.asyncValidator, {
     version: VERSION,
+    addRules: addFieldRules,
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     log: info,

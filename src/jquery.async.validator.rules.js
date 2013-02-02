@@ -106,7 +106,7 @@
       fn: function(r) {
         var re;
         try {
-          var str = r.params[0];
+          var str = r.args[0];
           re = new RegExp(str);
         } catch(error) {
           r.warn("Invalid regex: " + str);
@@ -139,7 +139,7 @@
       return true;
     },
     size: function(r){
-      var v = r.val(), exactOrLower = r.params[0], upper = r.params[1];
+      var v = r.val(), exactOrLower = r.args[0], upper = r.args[1];
       if(exactOrLower !== undefined && upper === undefined) {
         var exact = parseInt(exactOrLower, 10);
         if(r.val().length !== exact)
@@ -156,13 +156,13 @@
       return true;
     },
     min: function(r) {
-      var v = r.val(), min = parseInt(r.params[0], 10);
+      var v = r.val(), min = parseInt(r.args[0], 10);
       if(v.length < min)
         return "Must be at least " + min + " characters";
       return true;
     },
     max: function(r) {
-      var v = r.val(), max = parseInt(r.params[0], 10);
+      var v = r.val(), max = parseInt(r.args[0], 10);
       if(v.length > max)
         return "Must be at most " + max + " characters";
       return true;
@@ -170,7 +170,7 @@
 
     decimal: function(r) {
       var vStr = r.val(),
-          places = r.params[0] ? parseInt(r.params[0], 10) : 2;
+          places = r.args[0] ? parseInt(r.args[0], 10) : 2;
     
       if(!vStr.match(/^\d+(,\d{3})*(\.\d+)?$/))
         return "Invalid decimal value";
@@ -185,26 +185,26 @@
     },
     min_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          suffix = r.params[1] || '',
-          min = parseFloat(r.params[0]);
+          suffix = r.args[1] || '',
+          min = parseFloat(r.args[0]);
       if(v < min)
         return "Must be greater than " + min + suffix;
       return true;
     },
     max_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          suffix = r.params[1] || '',
-          max = parseFloat(r.params[0]);
+          suffix = r.args[1] || '',
+          max = parseFloat(r.args[0]);
       if(v > max)
         return "Must be less than " + max + suffix;
       return true;
     },
     range_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          prefix = r.params[2] || '',
-          suffix = r.params[3] || '',
-          min = parseFloat(r.params[0]),
-          max = parseFloat(r.params[1]);
+          prefix = r.args[2] || '',
+          suffix = r.args[3] || '',
+          min = parseFloat(r.args[0]),
+          max = parseFloat(r.args[1]);
       if(v > max || v < min)
         return "Must be between " + prefix + min + suffix + "\nand " + prefix + max + suffix;
       return true;
@@ -216,7 +216,7 @@
       return true;
     },
     minAge: function(r){
-      var age = r.params[0];
+      var age = r.args[0];
       if(!age || isNaN(parseInt(age,10))) {
         console.log("WARNING: Invalid Age Param: " + age);
         return true;
@@ -265,7 +265,7 @@
       fn: function(r) {
 
         var checks = r.fields("input[type=checkbox]:checked");
-        var checksRequired = parseInt(r.params[0],10);
+        var checksRequired = parseInt(r.args[0],10);
 
         if(checks.length < checksRequired)
           return "You must choose at least " + (checksRequired === 1 ? 'one' : checksRequired);

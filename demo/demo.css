@@ -4,6 +4,11 @@ body {
   padding-top: 20px;
 }
 
+@media (max-width: 979px){
+  body#app {
+    padding-top: 20px;
+  }
+}
 .test-container {
   display: none;
 }
@@ -33,4 +38,8 @@ h3,h5 {
 }
 .alert strong {
   font-style: italic;
+}
+
+a[data-goto] {
+  cursor: pointer;
 }

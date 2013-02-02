@@ -10,8 +10,6 @@
   if(window.console === undefined)
     window.console = { isFake: true };
 
-  if(window.console === undefined)
-    window.console = { isFake: true };
   var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
   for (var i = fns.length - 1; i >= 0; i--)
     if(window.console[fns[i]] === undefined)
@@ -47,7 +45,7 @@
     //if(a[0]) a[0] = getName(this) + a[0];
     if(grp === true) window.console.group(a[0]);
     if(a[0] && grp === null)
-      if($.browser.msie)
+      if(window.navigator.userAgent.indexOf("MSIE") >= 0)
         window.console.log(a.join(','));
       else
         window.console[type].apply(window.console, a);

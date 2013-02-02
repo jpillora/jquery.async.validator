@@ -1,17 +1,12 @@
-/*! jQuery Asynchronous Validator - v1.0.0 - 2013-01-02
-* https://github.com/jpillora/jquery.async.validator
-* Copyright (c) 2013 Jaime Pillora MIT Licensed  */
-
-
-(function() {
-
-(function($) {
+(function(window,document,undefined) {
+/** jQuery Asynchronous Validator - v0.0.1 - 2013/02/03
+ * https://github.com/jpillora/jquery.async.validator
+ * Copyright (c) 2013 Jaime Pillora - MIT
+ */(function($) {
 
   if(window.console === undefined)
     window.console = { isFake: true };
 
-  if(window.console === undefined)
-    window.console = { isFake: true };
   var fns = ["log","warn","info","group","groupCollapsed","groupEnd"];
   for (var i = fns.length - 1; i >= 0; i--)
     if(window.console[fns[i]] === undefined)
@@ -47,7 +42,7 @@
     //if(a[0]) a[0] = getName(this) + a[0];
     if(grp === true) window.console.group(a[0]);
     if(a[0] && grp === null)
-      if($.browser.msie)
+      if(window.navigator.userAgent.indexOf("MSIE") >= 0)
         window.console.log(a.join(','));
       else
         window.console[type].apply(window.console, a);
@@ -883,7 +878,7 @@ var TypedSet = Set.extend({
 
       executed: function(result) {
         this._super(result);
-        this.element.info('result: ' + (result===undefined ? 'Passed' : 'Failed: ' + result));
+        this.element.log('result: ' + (result===undefined ? 'Passed' : 'Failed: ' + result));
         this.domElem.triggerHandler("validated", arguments);
       }
 
@@ -1412,7 +1407,7 @@ var TypedSet = Set.extend({
           .trigger("initialised.jqv");
 
         this.updateFields();
-        this.info("bound to " + this.fields.size() + " elems");
+        this.log("bound to " + this.fields.size() + " elems");
       },
 
       unbindEvents: function() {
@@ -1560,9 +1555,9 @@ var TypedSet = Set.extend({
   })();
 
   $.fn.scrollView = function(onComplete) {
-    return this.each(function() {
-
-      var field = $(this);
+    
+    var field = $(this).first();
+    if(field.length === 1) {
       if(field.is(".styled")) field = field.siblings("span");
       $('html, body').animate({
           scrollTop: Math.max(0,field.offset().top - 100)
@@ -1570,8 +1565,9 @@ var TypedSet = Set.extend({
           duration: 1000,
           complete: onComplete || $.noop
       });
+    }
 
-    });
+    return $(this);
   };
 
   $.fn.equals = function(that) {
@@ -1667,6 +1663,7 @@ var TypedSet = Set.extend({
 
   $.extend($.asyncValidator, {
     version: VERSION,
+    addRules: addFieldRules,
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     log: info,
@@ -1804,7 +1801,7 @@ var TypedSet = Set.extend({
       fn: function(r) {
         var re;
         try {
-          var str = r.params[0];
+          var str = r.args[0];
           re = new RegExp(str);
         } catch(error) {
           r.warn("Invalid regex: " + str);
@@ -1837,7 +1834,7 @@ var TypedSet = Set.extend({
       return true;
     },
     size: function(r){
-      var v = r.val(), exactOrLower = r.params[0], upper = r.params[1];
+      var v = r.val(), exactOrLower = r.args[0], upper = r.args[1];
       if(exactOrLower !== undefined && upper === undefined) {
         var exact = parseInt(exactOrLower, 10);
         if(r.val().length !== exact)
@@ -1854,13 +1851,13 @@ var TypedSet = Set.extend({
       return true;
     },
     min: function(r) {
-      var v = r.val(), min = parseInt(r.params[0], 10);
+      var v = r.val(), min = parseInt(r.args[0], 10);
       if(v.length < min)
         return "Must be at least " + min + " characters";
       return true;
     },
     max: function(r) {
-      var v = r.val(), max = parseInt(r.params[0], 10);
+      var v = r.val(), max = parseInt(r.args[0], 10);
       if(v.length > max)
         return "Must be at most " + max + " characters";
       return true;
@@ -1868,7 +1865,7 @@ var TypedSet = Set.extend({
 
     decimal: function(r) {
       var vStr = r.val(),
-          places = r.params[0] ? parseInt(r.params[0], 10) : 2;
+          places = r.args[0] ? parseInt(r.args[0], 10) : 2;
     
       if(!vStr.match(/^\d+(,\d{3})*(\.\d+)?$/))
         return "Invalid decimal value";
@@ -1883,26 +1880,26 @@ var TypedSet = Set.extend({
     },
     min_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          suffix = r.params[1] || '',
-          min = parseFloat(r.params[0]);
+          suffix = r.args[1] || '',
+          min = parseFloat(r.args[0]);
       if(v < min)
         return "Must be greater than " + min + suffix;
       return true;
     },
     max_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          suffix = r.params[1] || '',
-          max = parseFloat(r.params[0]);
+          suffix = r.args[1] || '',
+          max = parseFloat(r.args[0]);
       if(v > max)
         return "Must be less than " + max + suffix;
       return true;
     },
     range_val: function(r) {
       var v = parseFloat(r.val().replace(/[^\d\.]/g,'')),
-          prefix = r.params[2] || '',
-          suffix = r.params[3] || '',
-          min = parseFloat(r.params[0]),
-          max = parseFloat(r.params[1]);
+          prefix = r.args[2] || '',
+          suffix = r.args[3] || '',
+          min = parseFloat(r.args[0]),
+          max = parseFloat(r.args[1]);
       if(v > max || v < min)
         return "Must be between " + prefix + min + suffix + "\nand " + prefix + max + suffix;
       return true;
@@ -1914,7 +1911,7 @@ var TypedSet = Set.extend({
       return true;
     },
     minAge: function(r){
-      var age = r.params[0];
+      var age = r.args[0];
       if(!age || isNaN(parseInt(age,10))) {
         console.log("WARNING: Invalid Age Param: " + age);
         return true;
@@ -1963,7 +1960,7 @@ var TypedSet = Set.extend({
       fn: function(r) {
 
         var checks = r.fields("input[type=checkbox]:checked");
-        var checksRequired = parseInt(r.params[0],10);
+        var checksRequired = parseInt(r.args[0],10);
 
         if(checks.length < checksRequired)
           return "You must choose at least " + (checksRequired === 1 ? 'one' : checksRequired);
@@ -1974,4 +1971,4 @@ var TypedSet = Set.extend({
   });
 
 })(jQuery);
-}());
+}(window,document));

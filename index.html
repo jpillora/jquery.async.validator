@@ -6,9 +6,10 @@
 <link rel="stylesheet" type="text/css" href="demo/demo.css">
 </head>
 <body id="app">
+  <div class="loading-cover" style="z-index: 2000;  position: fixed;  height: 100%;  width: 100%;  top: 0px; left: 0px;  z-index: 2000;  color: #1B1B1B;  text-align: center;  padding-top: 40px;  font-size: 40px;  background: url('http://framework.jpillora.com/img/loading64black.gif') no-repeat scroll 50% 100px white; font-family: Helvetica;">Loading...</div>
 
-   <div class="loading-cover" style="z-index: 2000;  position: fixed;  height: 100%;  width: 100%;  top: 0px; left: 0px;  z-index: 2000;  color: #1B1B1B;  text-align: center;  padding-top: 40px;  font-size: 40px;  background: url('http://framework.jpillora.com/img/loading64black.gif') no-repeat scroll 50% 100px white; font-family: Helvetica;">Loading...</div>
-
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  <script src="dist/jquery.async.validator.prompt.js"></script>
    <!-- Notices
     <div class="alert"><strong>!</strong></div>
     -->
@@ -42,43 +43,42 @@
             <h4>Features</h4>
             <ul>
               <li>Easily extendable</li>
+              <li>Configurable validators using</li>
               <li>Fully customisable asynchronous validations</li>
-              <li>Grouped validations (validation dependance)</li>
+              <li>Grouped validations (validations across multiple elements)</li>
             </ul>
           </div>
 
-          <div class="demo" data-nav-anchor="Include">
-            <h4>Include</h4>
+          <div class="demo" data-nav-anchor="Usage">
+            <h4>Usage</h4>
             <h5>Download</h5>
 
             With jQuery Prompt
             <ul>
-              <li><a href="http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.js">Development Version with jquery.prompt</a></li>
-              <li><a href="http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.min.js">Production Version with jquery.prompt</a></li>
+              <li><a href="http://jpillora.github.com/jquery.async.validator/dist/jquery.async.validator.prompt.js">Development Version with jquery.prompt</a></li>
+              <li><a href="http://jpillora.github.com/jquery.async.validator/dist/jquery.async.validator.prompt.min.js">Production Version with jquery.prompt</a></li>
             </ul>
 
             Without jQuery Prompt
             <ul>
-              <li><a href="http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.js">Development Version</a></li>
-              <li><a href="http://raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.min.js">Production Version</a></li>
+              <li><a href="http://jpillora.github.com/jquery.async.validator/dist/jquery.async.validator.js">Development Version</a></li>
+              <li><a href="http://jpillora.github.com/jquery.async.validator/dist/jquery.async.validator.min.js">Production Version</a></li>
             </ul>
 
-            <div class="alert"><strong>Note</strong> Without jQuery Prompt, you will need to implement the <code>prompt</code> method in order to see visible changes. Todo Docs.</div>
+            <div class="alert"><strong>Note</strong> Without jQuery Prompt, you will need to implement a <a href="#option-prompt">prompt handler option</a> in order to see visible changes.</div>
 
             <h5>GitHub Hosted</h5>
 
             <pre class="prettyprint">
 &lt;!-- jQuery --&gt;
-&lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;!-- jQuery Async Validator (with jQuery Prompt included) --&gt;
-&lt;script src=&quot;//raw.github.com/jpillora/jquery.async.validator/gh-pages/dist/jquery.async.validator.prompt.min.js&quot;&gt;&lt;/script&gt;
-&lt;!-- jQuery Prompt stylesheet --&gt;
-&lt;link href=&quot;//raw.github.com/jpillora/jquery.prompt/gh-pages/dist/jquery.prompt.css&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot; &gt;
+&lt;script src=&quot;http://jpillora.github.com/jquery.async.validator/dist/jquery.async.validator.prompt.min.js&quot;&gt;&lt;/script&gt;
 </pre>
 
-            <div class="alert">
-              <strong>Beware!</strong> GitHub is not intended for use as a CDN and may not always be avaiable.
+            <div class="alert alert-error">
+              <strong>Be careful with this direct link!</strong> GitHub Pages don't support HTTPS and may have download limits.
             </div>
 
           </div>
@@ -88,10 +88,7 @@
         <div data-nav-heading="Basic Examples" class="row-fluid">
           <h3>Basic Examples</h3>
 
-
-
           <div class="demo" data-nav-anchor="Hello World">
-            <h4>Hello Asyn Validator!</h4>
 
             Given the following form
 
@@ -103,7 +100,7 @@
 &lt;/form&gt;
 </pre>
 
-            Add some validators
+            Add some validation rules
             <pre data-html></pre>
 
             Boom
@@ -116,34 +113,68 @@
             </div>
 
             <div class="alert alert-info">
-              <strong>Note</strong> jQuery Async Validator will auto-initialise all forms that contain an element with <code>data-validate</code> attribute. So in this case no script is required.
+              <strong>Note</strong> jQuery Async Validator will auto-initialise all forms that contain an element with <code>data-validate</code> attribute. Since we're just using defaults settings, no extra code is required.
             </div>
             
           </div>
 
-          <div class="demo" data-nav-anchor="Multiple Validatidators">
-            <h4>Test!</h4>
-
-
-            You can also add multiple validators
+          <div class="demo" data-nav-anchor="Multiple Rules">
+            You can also add multiple validation rules
             <pre data-html></pre>
-
-            And some script
-            <pre data-script></pre>
-
-            Boom
+            Like so
             <div data-html>
               <form>
-                <input name="num1" value="42" data-validate="number">
-                <input name="num2" value="xx" data-validate="number">
+                <input name="num" value="" data-validate="required,number">
                 <input class="submit" type="submit"/>
               </form>
             </div>
+            <div class="alert alert-info">
+              <strong>Note</strong> You can use any combination of validation rules. Each field will execute it's validation rules in sequence. See <a href="#execution-sequence">Execution Sequence</a> for more information. 
+            </div>
+          </div>
+
+          <div class="demo" data-nav-anchor="List of Included Rules">
+            <table class="table">
+              <thead>
+                <tr><th>Name</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>required</td><td>The value of the element cannot be blank</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="demo" data-nav-anchor="Custom Rules">
+            If the validation rule you're looking for isn't in the list above, it's easy to create your own custom rule.
+
+
+            Add a new rule:
+            <pre data-script></pre>
+
+            Now you can use <code>divisibleByThree</code>:
+            <pre data-html></pre>
 
             <script data-script type="text/javascript">
-              console.log(42);
+              $.asyncValidator.addRules({
+
+                divisibleByThree: function(r) {
+                  var n = parseInt(r.val());
+                  if(n%3 !== 0)
+                    return "Not divisible by 3!"
+                  return true;
+                }
+
+              });
             </script>
 
+            And Voila:
+            <div data-html>
+              <form>
+                <input name="num" value="5" data-validate="divisibleByThree">
+                <input class="submit" type="submit"/>
+              </form>
+            </div>
+            <div class="alert"><strong>Note</strong> See the <a href="#rule-object-spec">Rule Object Spec</a> for more information.</div>
           </div>
 
         </div><!-- Basic -->
@@ -155,6 +186,14 @@
           <div class="alert"><strong>Note</strong> Documentation In Progress !</div>
 
         </div><!-- API -->
+
+        <div data-nav-heading="Options" class="row-fluid">
+          <h3>Options</h3>
+
+          <div class="alert"><strong>Note</strong> Documentation In Progress !</div>
+
+        </div><!-- Options -->
+
       </div>
     </div>
 

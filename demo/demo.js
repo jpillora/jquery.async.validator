@@ -1,20 +1,10 @@
-require.config({
-  shim: {
-    '../dist/jquery.async.validator':             ['jquery'],
-    '../../jquery.prompt/dist/jquery.prompt':     ['jquery']
-  }
-});
-
 define([
   'util/log',
-  'jquery',
-  '../dist/jquery.async.validator',
-  '../../jquery.prompt/dist/jquery.prompt',
   'underscore',
   'lib/prettify',
   'lib/bootstrap.min'],
   function(log) {
-
+    window.$ = $;
     function setCode(container, pre) {
 
       if(container.length === 0 || pre.length === 0) return;
@@ -70,22 +60,39 @@ define([
 
 
     function create(type) { return $("<"+type+"/>"); }
+    function slugify(title) { return title.replace(/\s/g, '-').toLowerCase(); }
 
     function setupNav() {
 
       var header = _.template('<li class="nav-header"><%= title %></li>'),
-          anchor = _.template('<li><a href="#<%= title %>"><%= title %></a></li>'),
+          anchor = _.template('<li><a href="#<%= slug %>"><%= title %></a></li>'),
           navList = $("#nav-list");
 
-      $("[data-nav-heading]").each(function() {
+      $("[data-nav-heading]").each(setupNavHeading);
 
+      function setupNavHeading(){
         navList.append(header({title: $(this).data('nav-heading') }));
+        $(this).find("[data-nav-anchor]").each(setupNavAnchor);
+      }
 
-        $(this).find("[data-nav-anchor]").each(function() {
-          var title = $(this).data("nav-anchor");
-          $(this).attr('id', title);
-          navList.append(anchor( {title: title}));
-        });
+      function setupNavAnchor() {
+        var title = $(this).data("nav-anchor"),
+            slug = slugify(title),
+            first = $(this).children(":first");
+
+        if(!first.is('h4'))
+          $(this).prepend($("<h4/>").html(title));
+
+        $(this).attr('id', slug);
+        navList.append(anchor( {title: title, slug: slug}));
+      }
+
+    }
+
+    function setupLinks() {
+      $("a[href^=#]").each(function() {
+        var sel = $(this).attr('href');
+        if($(sel).length === 0) console.log(this);
       });
     }
 
@@ -105,25 +112,44 @@ define([
       });
     }
 
+    // dom listeners
+    function handleHashClick(e) {
+      e.preventDefault();
+      var id = $(this).attr('href');
+      var elem = $(id).scrollView(function() {
+        window.location.hash = id;
+      });
+
+      if(elem.length === 0) alert("Sorry those docs are still in progress !");
+
+      return false;
+    }
+
+    //intercept all form submissions
+    var successElem = $('<div class="alert alert-success"><strong>'+
+      'Validation successful ! </strong> If this was a real form, it would be submitting right now...'+
+      '</div>');
+
+    function handleDemoFormSubmit() {
+      $(this).append(successElem.show().stop().delay(2000).fadeOut());
+      return false;
+    }
+
     $(document).ready(function() {
 
       setupNav();
+      setupLinks();
       setupCodeSnippets();
 
       $('.loading-cover').fadeOut('fast');
 
       window.prettyPrint();
 
-      //intercept all form submissions
-      var successElem = $('<div class="alert alert-success"><strong>'+
-        'Validation successful ! </strong> Submitting form...'+
-        '</div>');
 
-      $(document).on("submit","form", function() {
-        $(this).append(successElem.show().stop().delay(2000).fadeOut());
-        return false;
-      });
-      
+      $(document)
+        .on("submit","form", handleDemoFormSubmit)
+        .on("click", "a[href^=#]", handleHashClick);
+    
     });
 
   }
