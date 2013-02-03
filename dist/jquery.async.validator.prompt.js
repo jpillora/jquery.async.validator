@@ -179,7 +179,7 @@
       promptPosition = this.prompt.parent().position();
       height = this.elem.outerHeight();
       left = elementPosition.left - promptPosition.left;
-      if (!$.browser.msie) {
+      if (window.navigator.userAgent.indexOf("MSIE") === -1) {
         height += elementPosition.top - promptPosition.top;
       }
       return {

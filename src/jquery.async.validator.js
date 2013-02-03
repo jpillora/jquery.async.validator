@@ -716,12 +716,11 @@
         if(!elem) elem = this.element.fields.array[0] && this.element.fields.array[0].elem;
         if(elem) opts.prompt(elem, result);
 
-
-
         if(this.parent instanceof FieldExecution)
           this.parent.element.options.track(
             'Validate Group',
-            this.parent.element.name + ';' + (this.domElem.attr('data-validate') || 'non_group'),
+            this.parent.element.name + ';' +
+              (this.domElem.attr(opts.validateAttribute) || 'non_group'),
             errored ? result : 'Valid',
             errored ? 0 : 1
           );
@@ -1396,15 +1395,10 @@
   /* ===================================== *
    * Auto attach on DOM ready
    * ===================================== */
-  $(function() {
-    $("form").filter(function() {
-      return $(this).find("[data-validate]").length; 
-    }).asyncValidator();
-  });
 
   $(function() {
     $("form").filter(function() {
-      return $(this).find("[data-validate]").length > 0;
+      return $(this).find("[" + globalOptions.validateAttribute + "]").length > 0;
     }).asyncValidator();
   });
 

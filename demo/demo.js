@@ -5,6 +5,7 @@ define([
   'lib/bootstrap.min'],
   function(log) {
     window.$ = $;
+
     function setCode(container, pre) {
 
       if(container.length === 0 || pre.length === 0) return;
@@ -23,13 +24,17 @@ define([
         line = line.replace(new RegExp("^" + indentation), "");
         content += line + "\n";
       }
-      pre.append(prettyPrintOne(encode(content)));
+      pre.append(prettify(content));
     }
 
 
     //helpers
     function encode(value) {
       return $('<div/>').text(value).html();
+    }
+
+    function prettify(str) {
+      return prettyPrintOne(encode(str));
     }
 
     $.fn.togglers = function() {
@@ -64,14 +69,22 @@ define([
 
     function setupNav() {
 
-      var header = _.template('<li class="nav-header"><%= title %></li>'),
+      var header = _.template('<li class="nav-header"><%= heading %></li>'),
           anchor = _.template('<li><a href="#<%= slug %>"><%= title %></a></li>'),
           navList = $("#nav-list");
 
       $("[data-nav-heading]").each(setupNavHeading);
 
       function setupNavHeading(){
-        navList.append(header({title: $(this).data('nav-heading') }));
+        var heading = $(this).data('nav-heading'),
+            slug = slugify(heading),
+            first = $(this).children(":first");
+
+        if(!first.is('h3'))
+          $(this).prepend($("<h3/>").html(heading));
+
+        $(this).attr('id', slug);
+        navList.append(header({heading: heading }));
         $(this).find("[data-nav-anchor]").each(setupNavAnchor);
       }
 
@@ -90,15 +103,16 @@ define([
     }
 
     function setupLinks() {
-      $("a[href^=#]").each(function() {
-        var sel = $(this).attr('href');
-        if($(sel).length === 0) console.log(this);
+      $("a[data-link]").each(function() {
+        var sel = "#" + slugify($(this).html());
+        $(this).attr('href', sel);
+        if($(sel).length === 0)
+          console.log("missing: ", this);
       });
     }
 
     function setupCodeSnippets() {
       $(".demo").each(function() {
-
 
         var demo = $(this),
             htmlDemo = demo.find("div[data-html]"),
@@ -110,6 +124,16 @@ define([
         setCode(scriptDemo, scriptPre);
 
       });
+    }
+
+    function setupAPITable() {
+
+      $(".api-table tbody tr").each(function() {
+        var codeCol = $(this).children().eq(2);
+        codeCol.html(prettify(codeCol.html()));
+      });
+
+
     }
 
     // dom listeners
@@ -140,6 +164,7 @@ define([
       setupNav();
       setupLinks();
       setupCodeSnippets();
+      setupAPITable();
 
       $('.loading-cover').fadeOut('fast');
 

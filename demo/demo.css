@@ -21,14 +21,14 @@ h3,h5 {
   margin-top: 5px;
 }
 
-#app pre, #app .demo div[data-html] {
+#app pre, #app div[data-nav-anchor] div[data-html] {
   padding: 15px;
   margin: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 3px;
 }
 
-.demo {
+div[data-nav-anchor] {
   margin: 10px;
   margin-bottom: 50px;
 }
@@ -42,4 +42,8 @@ h3,h5 {
 
 a[data-goto] {
   cursor: pointer;
+}
+
+.api-table td:nth-child(1) {
+  font-family: Courier;
 }
