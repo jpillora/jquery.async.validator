@@ -259,6 +259,33 @@
       }
     },
 
+    dateRange: {
+      run: 'after',
+      fn: function(r) {
+
+        var start = r.fields("[data-date=start]"),
+            end = r.fields("[data-date=end]");
+
+        if(start.length === 0 || end.length === 0) {
+          r.warn("Missing dateRange fields, skipping...");
+          return true;
+        }
+
+        var startDate = $.asyncValidator.utils.parseDate(start.val());
+        if(!startDate)
+          return "Invalid Start Date";
+
+        var endDate = $.asyncValidator.utils.parseDate(end.val());
+        if(!endDate)
+          return "Invalid End Date";
+
+        if(startDate >= endDate)
+          return "Start Date must come before End Date";
+
+        return true;
+      }
+    },
+
     min_checks: {
       run: 'before',
 

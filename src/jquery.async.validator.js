@@ -37,7 +37,7 @@
 
     parseDate: function(dateStr) {
       //format check
-      var m = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      var m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       if(!m) return null;
 
       var date;

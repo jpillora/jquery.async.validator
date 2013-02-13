@@ -1,5 +1,5 @@
 (function(window,document,undefined) {
-/** jQuery Asynchronous Validator - v0.0.1 - 2013/02/03
+/** jQuery Asynchronous Validator - v0.0.1 - 2013/02/13
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */(function($) {
@@ -318,7 +318,7 @@ var TypedSet = Set.extend({
 
     parseDate: function(dateStr) {
       //format check
-      var m = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      var m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       if(!m) return null;
 
       var date;
@@ -997,12 +997,11 @@ var TypedSet = Set.extend({
         if(!elem) elem = this.element.fields.array[0] && this.element.fields.array[0].elem;
         if(elem) opts.prompt(elem, result);
 
-
-
         if(this.parent instanceof FieldExecution)
           this.parent.element.options.track(
             'Validate Group',
-            this.parent.element.name + ';' + (this.domElem.attr('data-validate') || 'non_group'),
+            this.parent.element.name + ';' +
+              (this.domElem.attr(opts.validateAttribute) || 'non_group'),
             errored ? result : 'Valid',
             errored ? 0 : 1
           );
@@ -1677,15 +1676,10 @@ var TypedSet = Set.extend({
   /* ===================================== *
    * Auto attach on DOM ready
    * ===================================== */
-  $(function() {
-    $("form").filter(function() {
-      return $(this).find("[data-validate]").length; 
-    }).asyncValidator();
-  });
 
   $(function() {
     $("form").filter(function() {
-      return $(this).find("[data-validate]").length > 0;
+      return $(this).find("[" + globalOptions.validateAttribute + "]").length > 0;
     }).asyncValidator();
   });
 
@@ -1951,6 +1945,33 @@ var TypedSet = Set.extend({
         });
 
         return result;
+      }
+    },
+
+    dateRange: {
+      run: 'after',
+      fn: function(r) {
+
+        var start = r.fields("[data-date=start]"),
+            end = r.fields("[data-date=end]");
+
+        if(start.length === 0 || end.length === 0) {
+          r.warn("Missing dateRange fields, skipping...");
+          return true;
+        }
+
+        var startDate = $.asyncValidator.utils.parseDate(start.val());
+        if(!startDate)
+          return "Invalid Start Date";
+
+        var endDate = $.asyncValidator.utils.parseDate(end.val());
+        if(!endDate)
+          return "Invalid End Date";
+
+        if(startDate >= endDate)
+          return "Start Date must come before End Date";
+
+        return true;
       }
     },
 

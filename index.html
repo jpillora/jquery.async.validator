@@ -179,7 +179,35 @@
                 <input class="submit" type="submit"/>
               </form>
             </div>
-            <div class="alert"><strong>Note</strong> See the <a data-link>Rule Object Spec</a> for more information.</div>
+            <div class="alert"><strong>Note</strong> See the <a data-link>Rule Object</a> Spec for more information.</div>
+          </div>
+
+        </div><!-- Custom -->
+
+
+        <div data-nav-heading="Advanced Validations" class="row-fluid">
+
+          <div class="demo" data-nav-anchor="Group Validations">
+            <p>
+              If the validation you need to apply depends on two fields, for example, a date range needs both the start and the end dates to be validated. In this case, setting a <code>data-validate</code> attribute on one of the fields wouldn't make sense. So instead of placing the <code>data-validate</code> on the input fields, you place it on a parent. Note: All validations listed on a non-input field will seen as be Group Validations. 
+            </p>
+
+            <p>
+              Like so:
+            </p>
+            <pre data-html></pre>
+
+            And Voila:
+            <div data-html>
+              <form>
+                <span data-validate="dateRange">
+                  <input value="3/1/2013x" data-validate="date" data-date="start">
+                  <input value="2/1/2013y" data-validate="date" data-date="end">
+                <span/>
+                <input class="submit" type="submit"/>
+              </form>
+            </div>
+            <div class="alert"><strong>Note</strong> See the <a data-link>Rule Object</a> Spec for more information.</div>
           </div>
 
         </div><!-- Custom -->
@@ -188,12 +216,48 @@
 
           <div class="alert"><strong>Note</strong> Documentation In Progress !</div>
 
+          <div data-nav-anchor="Setup" class="demo">
+            <table class="table table-striped table-bordered api-table">
+              <thead>
+                <tr><th>Method</th><th>Description</th><th>Parameters</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>$.asyncValidator({...})</td><td>Override the global options object</td><td>An <a data-link>Options</a> Object</td></tr>
+                <tr><td>$<code>("form")</code>.asyncValidator({...})</td><td>Enable and override the options of a selected form</td><td>An <a data-link>Options</a> Object</td></tr>
+              </tbody>
+            </table>
+            <div class="alert alert-info"><strong>Note</strong> $<code>("form")</code>.asyncValidator() gets automatically called on DOM ready (using default options). The above method will be required when dynamically adding new forms to the page.</div>
+          </div>
+          
+          <div data-nav-anchor="Custom Validation Rules" class="demo">
+            <table class="table table-striped table-bordered api-table">
+              <thead>
+                <tr><th>Method</th><th>Description</th><th>Parameters</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>$.asyncValidator.<code>addRules</code>([...])</td><td>Add rules for field validations.</td><td>An array of Field <a data-link>Rule Object</a>s</td></tr>
+                <tr><td>$.asyncValidator.<code>addGroupRules</code>([...])</td><td>Add rules for field validations.</td><td>An array of Group <a data-link>Rule Object</a>s</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div data-nav-anchor="Selector Functions" class="demo">
+            <table class="table table-striped table-bordered api-table">
+              <thead>
+                <tr><th>Method</th><th>Description</th><th>Parameters</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>$("#text-input").<code>validate</code>(...)</td><td>Programmatically trigger validation on an element.</td><td>A callback function with signature: function(error){}</td></tr>
+              </tbody>
+            </table>
+          </div>
+
         </div><!-- API -->
 
         <div data-nav-heading="Options" class="row-fluid">
 
           <div data-nav-anchor="List of Options" class="demo">          
-            <table class="table table-striped table-bordered api-table">
+            <table class="table table-striped table-bordered api-table highlight-col3-table">
               <thead>
                 <tr><th>Name</th><th>Description</th><th>Default</th></tr>
               </thead>

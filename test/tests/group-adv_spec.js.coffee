@@ -45,13 +45,13 @@ describe "Group validation (Advanced)", ->
         expect(result).to.have.string "digit"
 
     it "group 'after' validator 'sumTo10' should be reached and fail", ->
-      #make invalid
+      #make valid
       form.find("input:first").val "3"
       form.validate (result) ->
         expect(result).to.have.string "must all sum to 10"
 
     it "group 'after' validator 'sumTo10' should pass", ->
-      #make invalid
+      #make valid
       form.find("input:first").val "7"
       form.validate (result) ->
         expect(result).to.equal `undefined`

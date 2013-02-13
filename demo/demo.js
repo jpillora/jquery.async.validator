@@ -126,13 +126,12 @@ define([
       });
     }
 
-    function setupAPITable() {
+    function setupHighlightTable() {
 
-      $(".api-table tbody tr").each(function() {
+      $(".highlight-col3-table tbody tr").each(function() {
         var codeCol = $(this).children().eq(2);
         codeCol.html(prettify(codeCol.html()));
       });
-
 
     }
 
@@ -164,7 +163,7 @@ define([
       setupNav();
       setupLinks();
       setupCodeSnippets();
-      setupAPITable();
+      setupHighlightTable();
 
       $('.loading-cover').fadeOut('fast');
 
