@@ -2,6 +2,8 @@ jQuery Async Validator
 =====
 v0.0.1
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/a0bed67589ba85f50fbcda4bd6652813 "githalytics.com")](http://githalytics.com/jpillora/jquery.async.validator)
+
 Summary
 ---
 A jQuery plugin to provide fully customisable asynchronous client-side validations.
@@ -75,10 +77,4 @@ v0.0.1
 * Added to jQuery plugin repository
 
 * Released !
-
-
-
-
-<!-- Tracker -->
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/2ec87aabeaf1ff78eef8883aae18577c "githalytics.com")](http://githalytics.com/github.com/jpillora)
 
