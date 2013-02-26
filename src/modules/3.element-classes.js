@@ -155,7 +155,7 @@ var ValidationForm = null;
       this.options = new CustomOptions(options);
 
       this.fields = new TypedSet(ValidationField);
-      this.fieldsets = new TypedSet(ValidationGroup);
+      this.groups = {};
       this.fieldByName = {};
       this.invalidFields = {};
       this.fieldHistory = {};
@@ -208,42 +208,31 @@ var ValidationForm = null;
         elem = $(elem);
 
       var fieldSelector = "input:not([type=hidden]),select,textarea",
-          field, fieldElem, fieldset, fieldsetElem;
+          field, fieldElem;
 
-      if(elem.is(fieldSelector))
-        fieldElem = elem;
-      else
-        fieldsetElem = elem;
+      if(!elem.is(fieldSelector))
+        return this.warn("Containers cannot use validators");
 
-      //have field - find its fieldset
-      if(fieldElem) {
-        field = this.fields.find(fieldElem);
+      fieldElem = elem;
 
-        if(!field) {
-          field = new ValidationField(fieldElem, this);
-          this.fields.add(field);
-        }
-        fieldsetElem = fieldElem.parentsUntil(this.elem, "["+this.options.validateAttribute+"]:first");
+      field = this.fields.find(fieldElem);
+
+      if(!field) {
+        field = new ValidationField(fieldElem, this);
+        this.fields.add(field);
       }
 
-      //TODO allow nested fieldsets
-      //fieldsetElem = elem.parentsUntil(this.elem, "["+this.options.validateAttribute+"]:first");
-
-      fieldset = this.fieldsets.find(fieldsetElem);
-
-      if(!fieldset) {
-        fieldset = new ValidationGroup(fieldsetElem, this);
-        this.fieldsets.add(fieldset);
-      }
-
-      if(field) {
-        fieldset.fields.add(field);
-        field.fieldset = fieldset;
-      } else {
-        fieldsetElem.find(fieldSelector).each(this.updateField);
-      }
+      this.updateGroup(field);
 
       return field;
+    },
+
+    updateGroup: function(field) {
+      
+      // fieldsets = new TypedSet(ValidationGroup);
+      var rules = ruleManager.parseAttribute(field);
+
+      this.log(JSON.stringify(rules,null,2));
     },
 
     /* ===================================== *

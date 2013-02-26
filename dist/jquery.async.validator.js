@@ -1,8 +1,10 @@
-(function(window,document,undefined) {
 /** jQuery Asynchronous Validator - v0.0.1 - 2013/02/26
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
- */(function($) {
+ */
+
+(function(window,document,undefined) {
+(function($) {
 
   if(window.console === undefined)
     window.console = { isFake: true };
@@ -207,54 +209,6 @@ $.Deferred.parallelize = function(fns) {
 
   return d.promise();
 };
-
-var ParamParser = (function() {
-
-  var parse = function(str) {
-    var chars = str.split(""), name = "", gotName = false, 
-        param = "", gotParams = false, depth = 0, method = {};
-
-    for(var i in chars) {
-      var c = chars[i];
-      //parse name 'name(...)'
-      if(!gotName) {
-        if(c == '(') {
-          gotName = true;
-          method[name] = [];
-          continue;
-        } else if(c != ' ')
-          name += c;
-      }
-      //got name, recursive parse params '...(params)'
-      if(gotName && !gotParams) {
-        if(c == '(') {
-          param += c;
-          depth++;
-        } else if(c == ')' && depth > 0) {
-          param += c;
-          if(param) method[name].push(parse(param));
-          param = "";
-          depth--;
-        } else if(c == ')' && depth == 0)  {
-          if(param) method[name].push(param);
-          gotParams = true;
-        } else if(c == ',' && depth == 0) {
-          if(param) method[name].push(param);
-          param = "";
-        } else
-          param += c;
-      }
-    }
-    return method;
-  }
-
-  return {
-    parse: parse
-  };
-
-}());
-
-
 // Inspired by base2 and Prototype
 
 var Class = null;
@@ -686,127 +640,117 @@ var Rule = BaseClass.extend({
   }
 });
 
-
 /* ===================================== *
- * Current Rules (Plugin Wide)
+ * Rules Manager (Plugin Wide)
  * ===================================== */
 
-var validationRules = {
-  field:{},
-  group:{}
-};
+var ruleManager = null;
+(function() {
 
-function addFieldRules(obj) {
-  addRules('field', obj);
-}
-function addGroupRules(obj) {
-  addRules('group', obj);
-}
-function addRules(type,obj) {
-  //check format
-  for(var name in obj) {
-    if(validationRules[type][name])
-      warn("validator '%s' already exists", name);
-    // else
-    //   log("adding %s validator '%s'", type, name);
-  }
+  //cached token parser - must be in form 'one(1,2,two(3,4),three[scope](6,7),five)'
+  var parse = _.memoize(function(str) {
 
-  //deep extend rules by obj
-  $.extend(true, validationRules[type], obj);
-}
-
-//initialised in private scope
-var getElementRulesAndParams = null;
-(function(){
-  //private scope for helper functions
-
-  //cached token parser - must be in form 'one(1,2,two(3,4))'
-  var parse = Utils.memoize(ParamParser.parse);
-
-  var parseAttribute = function(elem, formOpts) {
-  };
-
-  //cached rule builder
-  var getRule = Utils.memoize(function(type,name) {
-    if(type !== 'field' && type !== 'group')
-      return warn("invalid rule type: '" + type + "'");
-
-    var userObj = validationRules[type][name];
-    if(!userObj)
-      return warn("missing '"+type+"' rule '"+name+"'");
-
-    return new Rule(type, name, userObj);
+    var chars = str.split(""), 
+        rule, rules = [],
+        c, m, depth = 0;
+    
+    //replace argument commas with semi-colons
+    for(var i = 0, l = chars.length; i<l; ++i) {
+      c = chars[i];
+      if(c === '(') depth++;
+      if(c === ')') depth--;
+      if(depth > 1) return null;
+      if(c === ',' && depth === 1) chars[i] = ";";
+    }
+    str = chars.join('');
+    
+    //bracket check
+    if(depth !== 0) return null;
+    
+    //convert to object
+    $.each(str.split(','), function(i, rule) {
+      m = rule.match(/^(\w+)(\[(\w+)\])?(\((\w+(\;\w)*)\))?$/);
+      if(!m) return;
+      rule = {};
+      rule.name = m[1];
+      if(m[3]) rule.scope = m[3];
+      if(m[5]) rule.args = m[5].split(';');
+      rules.push(rule);
+    });
+    return rules;
   });
 
-  //getElementRules
-  getElementRulesAndParams = function(validationElem) {
+  //privates
+  var rawRules = {},
+      builtRules = {};
+
+  var addRules = function(type,obj) {
+    //check format
+    for(var name in obj)
+      if(rawRules[name])
+        warn("validator '%s' already exists", name);
+
+    obj.type = type;
+
+    //deep extend rules by obj
+    $.extend(true, rawRules, obj);
+  };
+
+  //public
+  var addFieldRules = function(obj) {
+    addRules('field', obj);
+  };
+
+  var addGroupRules = function(obj) {
+    addRules('group', obj);
+  };
+
+  var getRule = function(name) {
+    var r = builtRules[name];
+    if(!r) {
+      r = new Rule(name, rawRules[name]);
+      builtRules[name] = r;
+    }
+    return r;
+  };
+
+  var parseAttribute = function(validationElem) {
+    var attrName = validationElem.form.options.validateAttribute,
+        attr = validationElem.elem.attr(attrName);
+    if(!attr) return null;
+    return parse(attr);
+  };
+
+  var parseElement = function(validationElem) {
 
     var required = false,
         type = null,
-        rules = [];
+        results = [];
 
-    if(validationElem.type === 'ValidationGroup')
-      type = 'group';
-    else if(validationElem.type === 'ValidationField')
-      type = 'field';
-    else
+    if(validationElem.type !== 'ValidationField')
       return warn("cannot get rules from invalid type");
 
-    if(!validationElem.elem)
-      return rules;
+    if(!validationElem.elem) return [];
 
-    var attrName = validationElem.form.options.validateAttribute;
-    var attr = validationElem.elem.attr(attrName);
+    results = this.parseAttribute(validationElem);
 
-    if(!attr)
-      return rules;
+    if(!results) return [];
 
-    var results = parse("x("+attr+")").x;
-
-    if(!results)
-      return rules;
-
-    for(var i = 0, l = results.length; i<l;++i ) {
-
-      var name = null, params = [], result = results[i];
-      //validate parsed names and params
-      if(!result)
-        return warn("cannot execute null rule");
-      else if ($.type(result) === 'string')
-        name = result;
-      else if ($.isPlainObject(result)) {
-
-        for(var n in result)
-          if(name) return warn('rule object should only contain 1 key');
-          else name = n;
-
-        if(!name)
-          return warn('rule object should contain 1 key');
-
-        params = result[name];
-
-        if(!$.isArray(params))
-          return warn('invalid rule params type - must be array');
-      } else
-        return warn('cannot execute rule of type "'+$.type(result)+'"');
-
-      name = $.trim(name);
-
-      if(name === 'required') required = true;
-
-      //validated
-      var rule = getRule(type,name);
-
-      if(rule)
-        rules.push({rule: rule, params: params});
-    }
-
-    rules.required = required;
-
-    return rules;
+    return $.map(results, function(result) {
+      result.rule = getRule(result.name);
+    });
   };
-})();
 
+  //public interface
+  ruleManager = {
+    addFieldRules: addFieldRules,
+    addGroupRules: addGroupRules,
+    getRule: getRule,
+    parseAttribute: parseAttribute,
+    parseElement: parseElement
+  };
+
+}());
 
 
 var ValidationForm = null;
@@ -962,7 +906,7 @@ var ValidationForm = null;
       this.options = new CustomOptions(options);
 
       this.fields = new TypedSet(ValidationField);
-      this.fieldsets = new TypedSet(ValidationGroup);
+      this.groups = {};
       this.fieldByName = {};
       this.invalidFields = {};
       this.fieldHistory = {};
@@ -1015,42 +959,31 @@ var ValidationForm = null;
         elem = $(elem);
 
       var fieldSelector = "input:not([type=hidden]),select,textarea",
-          field, fieldElem, fieldset, fieldsetElem;
+          field, fieldElem;
 
-      if(elem.is(fieldSelector))
-        fieldElem = elem;
-      else
-        fieldsetElem = elem;
+      if(!elem.is(fieldSelector))
+        return this.warn("Containers cannot use validators");
 
-      //have field - find its fieldset
-      if(fieldElem) {
-        field = this.fields.find(fieldElem);
+      fieldElem = elem;
 
-        if(!field) {
-          field = new ValidationField(fieldElem, this);
-          this.fields.add(field);
-        }
-        fieldsetElem = fieldElem.parentsUntil(this.elem, "["+this.options.validateAttribute+"]:first");
+      field = this.fields.find(fieldElem);
+
+      if(!field) {
+        field = new ValidationField(fieldElem, this);
+        this.fields.add(field);
       }
 
-      //TODO allow nested fieldsets
-      //fieldsetElem = elem.parentsUntil(this.elem, "["+this.options.validateAttribute+"]:first");
-
-      fieldset = this.fieldsets.find(fieldsetElem);
-
-      if(!fieldset) {
-        fieldset = new ValidationGroup(fieldsetElem, this);
-        this.fieldsets.add(fieldset);
-      }
-
-      if(field) {
-        fieldset.fields.add(field);
-        field.fieldset = fieldset;
-      } else {
-        fieldsetElem.find(fieldSelector).each(this.updateField);
-      }
+      this.updateGroup(field);
 
       return field;
+    },
+
+    updateGroup: function(field) {
+      
+      // fieldsets = new TypedSet(ValidationGroup);
+      var rules = ruleManager.parseAttribute(field);
+
+      this.log(JSON.stringify(rules,null,2));
     },
 
     /* ===================================== *
@@ -1236,8 +1169,8 @@ var FormExecution = null,
       //set groups
       var _this = this;
       this.executables = [];
-      this.element.fieldsets.map(function(f) {
-        _this.executables.push(new GroupExecution(f, _this));
+      this.element.fields.map(function(f) {
+        _this.executables.push(new FieldExecution(f, _this));
       });
     },
 
@@ -1256,141 +1189,7 @@ var FormExecution = null,
 
   });
 
-  //set in private scope
-  var GroupExecution = Execution.extend({
-    type: "GroupExecution",
 
-    init: function(fieldset, parent) {
-      this._super(fieldset, parent);
-    },
-
-    execute: function() {
-      this._super();
-
-      if(this.skipValidations())
-        return $.Deferred().always(this.executed).resolve().promise();
-
-      this.log('getting group rules');
-      var ruleParams = getElementRulesAndParams(this.element);
-
-      //map group rules into before/after groups
-      var ruleExes = $.map(ruleParams, $.proxy(function(r) {
-        return new RuleExecution(r, this);
-      },this));
-
-      this.beforeRules = [];
-      this.afterRules = [];
-
-      for(var i = 0, l = ruleExes.length; i<l; ++i){
-        var ruleExe = ruleExes[i];
-        if(ruleExe.rule.userObj &&
-           ruleExe.rule.userObj.run === 'after')
-          this.afterRules.push(ruleExe);
-        else
-          this.beforeRules.push(ruleExe);
-      }
-
-      //decide which fields to include
-      //in this group execution
-      if(this.parent instanceof FieldExecution &&
-         this.afterRules.length === 0) {
-        //if executed from a field and there are no 'after' rules
-        //only validate the one field
-        var field = this.parent;
-        field.group = this;
-        this.fields = [field];
-      } else {
-        //if executed from a form or there are 'after' rules
-        //validate all fields in the group (fieldset)
-        this.fields = this.element.fields.map($.proxy(function(f) {
-          return new FieldExecution(f, this);
-        },this));
-      }
-
-      this.log("exec");
-
-      var executables = [];
-
-      if(this.beforeRules.length > 0)
-        executables.push(this.execBefore);
-
-      executables.push(this.execFields);
-
-      if(this.afterRules.length > 0)
-        executables.push(this.execAfter);
-
-      //execute in 3 stages
-      return this.serialize(executables).always(this.executed);
-    },
-
-    //group validators
-    execBefore: function() {
-      this.log("before rules #%s", this.beforeRules.length);
-      return this.serialize(this.beforeRules).always(this.executedBefore);
-    },
-
-    //field validators
-    execFields: function() {
-      this.log("exec fields #%s", this.fields.length);
-      return this.parallelize(this.fields).always(this.executedFields);
-    },
-
-    //more group validators
-    execAfter: function() {
-      this.log("after rules #%s", this.afterRules.length);
-      return this.serialize(this.afterRules).always(this.executedAfter);
-    },
-
-    executedBefore: function(result) {
-      this.executedBeforeAfter(result);
-    },
-
-    executedFields: function(result) {
-    },
-
-    executedAfter: function(result) {
-      this.executedBeforeAfter(result);
-    },
-
-    executedBeforeAfter: function(result) {
-
-      var errored = !!result;
-      var opts = this.element.form.options;
-
-      
-      this.element.fields.each(function(f) {
-        opts.prompt(f.elem, false);
-        if(opts.errorClass)
-          opts.errorContainer(f.elem)
-            .toggleClass(opts.errorClass, errored);
-      });
-
-      var elem = this.triggerField();
-      if(!elem) elem = this.element.fields.array[0] && this.element.fields.array[0].elem;
-      if(elem) opts.prompt(elem, result);
-
-      if(this.parent instanceof FieldExecution)
-        this.parent.element.options.track(
-          'Validate Group',
-          this.parent.element.name + ';' +
-            (this.domElem.attr(opts.validateAttribute) || 'non_group'),
-          errored ? result : 'Valid',
-          errored ? 0 : 1
-        );
-    },
-
-    executed: function(result) {
-      this._super();
-      var errored = !!result;
-    },
-
-    triggerField: function() {
-      if(this.parent instanceof FieldExecution)
-        return this.parent.domElem;
-      return null;
-    }
-
-  });
 
   //set in plugin scope
   FieldExecution = Execution.extend({
@@ -1426,7 +1225,7 @@ var FormExecution = null,
       this.domElem.triggerHandler("validating");
 
       //execute rules
-      var ruleParams = getElementRulesAndParams(this.element);
+      var ruleParams = ruleManager.parseElement(this.element);
       var d = null;
 
       if(this.skipValidations()) {
@@ -1631,9 +1430,9 @@ $.asyncValidator = function(options) {
 
 $.extend($.asyncValidator, {
   version: VERSION,
-  addRules: addFieldRules,
-  addFieldRules: addFieldRules,
-  addGroupRules: addGroupRules,
+  addRules: ruleManager.addFieldRules,
+  addFieldRules: ruleManager.addFieldRules,
+  addGroupRules: ruleManager.addGroupRules,
   log: info,
   warn: warn,
   defaults: globalOptions,

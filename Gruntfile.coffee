@@ -25,7 +25,7 @@ module.exports = (grunt) ->
       "/** <%= pkg.title || pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today(\"yyyy/mm/dd\") %>\n"+
       " * <%= pkg.homepage %>\n" +
       " * Copyright (c) <%= grunt.template.today(\"yyyy\") %> <%= pkg.author.name %> - MIT\n"+
-      " */"
+      " */\n"
     webget:
       prompt:
         src: "http://jpillora.github.com/jquery.prompt/dist/jquery.prompt.js"
@@ -38,7 +38,6 @@ module.exports = (grunt) ->
     concat:
       options: 
         stripBanners: true
-        banner: '<%= banner %>' 
           # 
       dist:
         src: files
@@ -52,7 +51,7 @@ module.exports = (grunt) ->
       dist: 
         src: ['dist/*.js']
         dest: '.'
-        wrapper: ["(function(window,document,undefined) {\n","\n}(window,document));"]
+        wrapper: ["<%= banner %>\n(function(window,document,undefined) {\n","\n}(window,document));"]
     
     uglify:
       options: 
@@ -69,8 +68,10 @@ module.exports = (grunt) ->
 
     watch:
       scripts:
-        files: 'src/*.js'
+        files: 'src/**/*.js'
         tasks: 'default'
+        options:
+          interval: 5000
 
     jshint:
       all: ["src/*.js"]
@@ -122,5 +123,5 @@ module.exports = (grunt) ->
       fs.writeFileSync dest, body
       done true
 
-  # Default task.
-  grunt.registerTask "default", "jshint webget concat wrap uglify mocha".split(' ')
+  # Default task. webget  mocha
+  grunt.registerTask "default", "jshint concat wrap uglify".split(' ')

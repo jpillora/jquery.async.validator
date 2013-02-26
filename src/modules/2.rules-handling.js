@@ -121,125 +121,115 @@ var Rule = BaseClass.extend({
   }
 });
 
-
 /* ===================================== *
- * Current Rules (Plugin Wide)
+ * Rules Manager (Plugin Wide)
  * ===================================== */
 
-var validationRules = {
-  field:{},
-  group:{}
-};
+var ruleManager = null;
+(function() {
 
-function addFieldRules(obj) {
-  addRules('field', obj);
-}
-function addGroupRules(obj) {
-  addRules('group', obj);
-}
-function addRules(type,obj) {
-  //check format
-  for(var name in obj) {
-    if(validationRules[type][name])
-      warn("validator '%s' already exists", name);
-    // else
-    //   log("adding %s validator '%s'", type, name);
-  }
+  //cached token parser - must be in form 'one(1,2,two(3,4),three[scope](6,7),five)'
+  var parse = _.memoize(function(str) {
 
-  //deep extend rules by obj
-  $.extend(true, validationRules[type], obj);
-}
-
-//initialised in private scope
-var getElementRulesAndParams = null;
-(function(){
-  //private scope for helper functions
-
-  //cached token parser - must be in form 'one(1,2,two(3,4))'
-  var parse = Utils.memoize(ParamParser.parse);
-
-  var parseAttribute = function(elem, formOpts) {
-  };
-
-  //cached rule builder
-  var getRule = Utils.memoize(function(type,name) {
-    if(type !== 'field' && type !== 'group')
-      return warn("invalid rule type: '" + type + "'");
-
-    var userObj = validationRules[type][name];
-    if(!userObj)
-      return warn("missing '"+type+"' rule '"+name+"'");
-
-    return new Rule(type, name, userObj);
+    var chars = str.split(""), 
+        rule, rules = [],
+        c, m, depth = 0;
+    
+    //replace argument commas with semi-colons
+    for(var i = 0, l = chars.length; i<l; ++i) {
+      c = chars[i];
+      if(c === '(') depth++;
+      if(c === ')') depth--;
+      if(depth > 1) return null;
+      if(c === ',' && depth === 1) chars[i] = ";";
+    }
+    str = chars.join('');
+    
+    //bracket check
+    if(depth !== 0) return null;
+    
+    //convert to object
+    $.each(str.split(','), function(i, rule) {
+      m = rule.match(/^(\w+)(\[(\w+)\])?(\((\w+(\;\w)*)\))?$/);
+      if(!m) return;
+      rule = {};
+      rule.name = m[1];
+      if(m[3]) rule.scope = m[3];
+      if(m[5]) rule.args = m[5].split(';');
+      rules.push(rule);
+    });
+    return rules;
   });
 
-  //getElementRules
-  getElementRulesAndParams = function(validationElem) {
+  //privates
+  var rawRules = {},
+      builtRules = {};
+
+  var addRules = function(type,obj) {
+    //check format
+    for(var name in obj)
+      if(rawRules[name])
+        warn("validator '%s' already exists", name);
+
+    obj.type = type;
+
+    //deep extend rules by obj
+    $.extend(true, rawRules, obj);
+  };
+
+  //public
+  var addFieldRules = function(obj) {
+    addRules('field', obj);
+  };
+
+  var addGroupRules = function(obj) {
+    addRules('group', obj);
+  };
+
+  var getRule = function(name) {
+    var r = builtRules[name];
+    if(!r) {
+      r = new Rule(name, rawRules[name]);
+      builtRules[name] = r;
+    }
+    return r;
+  };
+
+  var parseAttribute = function(validationElem) {
+    var attrName = validationElem.form.options.validateAttribute,
+        attr = validationElem.elem.attr(attrName);
+    if(!attr) return null;
+    return parse(attr);
+  };
+
+  var parseElement = function(validationElem) {
 
     var required = false,
         type = null,
-        rules = [];
+        results = [];
 
-    if(validationElem.type === 'ValidationGroup')
-      type = 'group';
-    else if(validationElem.type === 'ValidationField')
-      type = 'field';
-    else
+    if(validationElem.type !== 'ValidationField')
       return warn("cannot get rules from invalid type");
 
-    if(!validationElem.elem)
-      return rules;
+    if(!validationElem.elem) return [];
 
-    var attrName = validationElem.form.options.validateAttribute;
-    var attr = validationElem.elem.attr(attrName);
+    results = this.parseAttribute(validationElem);
 
-    if(!attr)
-      return rules;
+    if(!results) return [];
 
-    var results = parse("x("+attr+")").x;
-
-    if(!results)
-      return rules;
-
-    for(var i = 0, l = results.length; i<l;++i ) {
-
-      var name = null, params = [], result = results[i];
-      //validate parsed names and params
-      if(!result)
-        return warn("cannot execute null rule");
-      else if ($.type(result) === 'string')
-        name = result;
-      else if ($.isPlainObject(result)) {
-
-        for(var n in result)
-          if(name) return warn('rule object should only contain 1 key');
-          else name = n;
-
-        if(!name)
-          return warn('rule object should contain 1 key');
-
-        params = result[name];
-
-        if(!$.isArray(params))
-          return warn('invalid rule params type - must be array');
-      } else
-        return warn('cannot execute rule of type "'+$.type(result)+'"');
-
-      name = $.trim(name);
-
-      if(name === 'required') required = true;
-
-      //validated
-      var rule = getRule(type,name);
-
-      if(rule)
-        rules.push({rule: rule, params: params});
-    }
-
-    rules.required = required;
-
-    return rules;
+    return $.map(results, function(result) {
+      result.rule = getRule(result.name);
+    });
   };
-})();
 
+  //public interface
+  ruleManager = {
+    addFieldRules: addFieldRules,
+    addGroupRules: addGroupRules,
+    getRule: getRule,
+    parseAttribute: parseAttribute,
+    parseElement: parseElement
+  };
+
+}());
 

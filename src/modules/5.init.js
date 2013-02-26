@@ -44,9 +44,9 @@ $.asyncValidator = function(options) {
 
 $.extend($.asyncValidator, {
   version: VERSION,
-  addRules: addFieldRules,
-  addFieldRules: addFieldRules,
-  addGroupRules: addGroupRules,
+  addRules: ruleManager.addFieldRules,
+  addFieldRules: ruleManager.addFieldRules,
+  addGroupRules: ruleManager.addGroupRules,
   log: info,
   warn: warn,
   defaults: globalOptions,
