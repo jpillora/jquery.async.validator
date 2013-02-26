@@ -3,10 +3,13 @@
  * MIT Licensed.
  */
 // Inspired by base2 and Prototype
+
+var Class = null;
+
 (function(){
   var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
   // The base Class implementation (does nothing)
-  window.Class = function(){};
+  Class = function(){};
   
   // Create a new Class that inherits from this class
   Class.extend = function(prop) {

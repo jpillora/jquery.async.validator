@@ -12,16 +12,10 @@ module.exports = (grunt) ->
   fs.writeFileSync "test/specs.json", JSON.stringify(tests)
   
   #file lists
-  topFiles = [
-  ]
-  bottomFiles = [
+  files = [
     "src/vendor/jquery.console.js"
-    "src/helper/guid.js"
-    "src/helper/param-parser.js"
-    "src/helper/resig-class.js"
-    "src/helper/set.js"
-    "src/helper/typedset.js"
-    "src/<%= pkg.name %>.js"
+    "src/helper/*.js"
+    "src/modules/*.js"
     "src/<%= pkg.name %>.rules.js"
   ]  
   # Project configuration.
@@ -47,11 +41,11 @@ module.exports = (grunt) ->
         banner: '<%= banner %>' 
           # 
       dist:
-        src: topFiles.concat(bottomFiles)
+        src: files
         dest: "dist/<%= pkg.name %>.js"
 
       distPrompt:
-        src: topFiles.concat(["src/vendor/jquery.prompt.js"]).concat(bottomFiles)
+        src: ["src/vendor/jquery.prompt.js"].concat(files)
         dest: "dist/<%= pkg.name %>.prompt.js"
 
     wrap: 
