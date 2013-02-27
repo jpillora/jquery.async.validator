@@ -243,21 +243,6 @@
    *      the field validations (default: 'after')
    */
   $.asyncValidator.addGroupRules({
-    required: {
-      run: 'before',
-      extend: "field:required",
-      fn: function(r) {
-
-        var result = true;
-
-        r.fields().each(function() {
-          if(result !== true) return;
-          result = r.requiredField(r, $(this));
-        });
-
-        return result;
-      }
-    },
 
     dateRange: {
       run: 'after',

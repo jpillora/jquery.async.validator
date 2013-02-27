@@ -17,7 +17,7 @@ var ValidationForm = null;
       this.bindAll();
       this.elem = elem;
       this.setName();
-      this.executions = [];
+      this.execution = null;
 
       if(!elem.length || elem.data('asyncValidator'))
         return false;
@@ -93,6 +93,7 @@ var ValidationForm = null;
       //instance variables
       this.form = form;
       this.options = form.options;
+      this.groups = form.groups;
       this.ruleNames = null;
       this.fieldset = null;
     },
@@ -102,39 +103,26 @@ var ValidationForm = null;
       var exec = new FieldExecution(this);
       exec.execute().always(callback);
       return undefined;
-    }
-  });
+    },
 
-  /* ===================================== *
-   * Field Set Wrapper
-   * ===================================== */
+    update: function() {
+      this.rules = ruleManager.parseElement(this);
 
-  var ValidationGroup = ValidationElement.extend({
-
-    //class/default variables
-    type: "ValidationGroup",
-    nongroup: false,
-
-    init: function(elem, form) {
-
-      //elem is allowed to be an empty selector
-      //represents a 'no_group' set - the set of individual fields
-
-      this._super(elem);
-      //sanity checks
-      if(!elem || !elem.jquery)
-        return;
-
-      if(!elem.length) {
-        this.nongroup = true;
-        this.name += "_nongroup";
+      //manage this field within shared groups
+      for(var i = 0; i < this.rules.length; ++i) {
+        var r = this.rules[i];
+        if(r.rule.type !== 'group') continue;
+        if(!this.groups[r.name])
+          this.groups[r.name] = {};
+        var scope = r.scope || 'default';
+        if(!this.groups[r.name][scope])
+          this.groups[r.name][scope] = new TypedSet(ValidationField);
+        this.groups[r.name][scope].add(this);
       }
-
-      this.form = form;
-      this.options = form.options;
-      this.fields = new TypedSet(ValidationField);
     }
+
   });
+
   /* ===================================== *
    * Form Wrapper
    * ===================================== */
@@ -195,6 +183,7 @@ var ValidationForm = null;
     updateFields: function() {
       var sel = "["+this.options.validateAttribute+"]";
       this.elem.find(sel).each(this.updateField);
+
       // this.log("print form", true);
       // this.print();
       // this.log(null, false);
@@ -222,17 +211,9 @@ var ValidationForm = null;
         this.fields.add(field);
       }
 
-      this.updateGroup(field);
+      field.update();
 
       return field;
-    },
-
-    updateGroup: function(field) {
-      
-      // fieldsets = new TypedSet(ValidationGroup);
-      var rules = ruleManager.parseAttribute(field);
-
-      this.log(JSON.stringify(rules,null,2));
     },
 
     /* ===================================== *
@@ -243,7 +224,6 @@ var ValidationForm = null;
 
       var submitForm = false;
 
-
       if(this.submitPending)
         this.warn("pending...");
 
@@ -252,14 +232,7 @@ var ValidationForm = null;
           this.submitResult === undefined) {
 
         this.submitPending = true;
-
-        var _this = this;
-        this.validate(function(error) {
-          _this.submitPending = false;
-          _this.submitResult = !error;
-          _this.elem.submit(); //trigger submit again, though with a result
-          _this.submitResult = undefined;
-        });
+        this.validate(this.doSubmit);
 
       //have result
       } else if (this.submitResult !== undefined) {
@@ -270,18 +243,22 @@ var ValidationForm = null;
       return submitForm;
     },
 
-    onKeyup: function(event) {
-
-      if(this.options.hideErrorOnChange)
-        this.options.prompt($(event.currentTarget),false);
-
+    doSubmit: function(err, result) {
+      this.submitPending = false;
+      this.submitResult = !err;
+      this.elem.submit(); //trigger onSubmit, though with a result
+      this.submitResult = undefined;
     },
 
-    onValidate: function(event) {
+    onKeyup: function(event) {
+      if(this.options.hideErrorOnChange)
+        this.options.prompt($(event.currentTarget),false);
+    },
 
+    //user triggered validate field event
+    onValidate: function(event) {
       var elem = $(event.currentTarget);
       var field = elem.data('asyncValidator') || this.updateField(elem);
-
       field.log("validate");
       field.validate($.noop);
     },
@@ -293,14 +270,16 @@ var ValidationForm = null;
     validate: function(callback) {
       this.updateFields();
       var exec = new FormExecution(this);
-      exec.execute().always(callback);
+      exec.execute().always(function(e) {
+        (callback || $.noop)(e.result);
+      });
       return undefined;
     },
 
     //listening for 'validate' event
     scrollFocus: function() {
 
-      var lastExec = this.executions[this.executions.length-1];
+      var lastExec = this.execution;
 
       if(!lastExec.errors.length) return;
 

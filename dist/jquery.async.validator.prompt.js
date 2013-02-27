@@ -1,4 +1,4 @@
-/** jQuery Asynchronous Validator - v0.0.1 - 2013/02/26
+/** jQuery Asynchronous Validator - v0.0.1 - 2013/02/27
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */
@@ -697,25 +697,18 @@ var VERSION = "0.0.1",
  * ===================================== */
 
 var globalOptions = {
-
   // Display log messages flag
   debug: false,
-
   // Attribute used to find validators
   validateAttribute: "data-validate",
-
   // Name of the event triggering field validation
   validationEventTrigger: "blur",
-
   // Automatically scroll viewport to the first error
   scroll: true,
-
   // Focus on the first input
   focusFirstField: true,
-
   // Hide error while the user is changing
   hideErrorOnChange: false,
-
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
   // What class name to apply to the 'errorContainer'
@@ -777,56 +770,55 @@ var BaseClass = Class.extend({
   bindAll: function() {
     for(var propName in this)
       this.bind(propName);
+  },
+  //enforce asynchronicity
+  nextTick: function(fn, args, ms) {
+    var _this = this;
+    return window.setTimeout(function() {
+      fn.apply(_this, args);
+    }, ms || 0);
   }
+
 }); 
+// the Rule class will store all state relating to
+// the user definition, all rule state from the DOM
+// will be passes into the function inside an
+// instance of a RuleExecution
+
 var Rule = BaseClass.extend({
 
-  init: function(type,name,userObj){
+  init: function(name, userObj){
     this.name = name;
-    this.type = type;
     this.buildFn(userObj);
   },
 
   //extracts the validation function out of the user defined object
   buildFn: function(userObj) {
 
-    //object is already a function...
-    if($.isFunction(userObj)) {
-      this.fn = userObj;
-      this.userObj = null;
-      this.ready = true;
-      return;
-    } else if(!$.isPlainObject(userObj)) {
+    if(!$.isPlainObject(userObj))
       return this.warn("rule definition must be a function or an object");
-    }
-
-    //object needs to be built into a funtion...
-
+    
     //clone object to keep a canonical version intact
     this.userObj = $.extend(true, {}, userObj);
 
+    this.type = userObj.type;
+
     //handle object.extend (may inherit a object.fn)
     while($.type(this.userObj.extend) === 'string') {
-      //extend using another validator -> validator type:name or just name
-      var m = this.userObj.extend.match(/^((\w+):)?(\w+)$/);
-      var otherType = m[2] || this.type;
-      var otherName = m[3];
+      //extend using another validator -> validator name
+      var otherName = this.userObj.extend;
       delete this.userObj.extend;
-      //check type exists
-      if(!validationRules[otherType]) {
-        return this.warn("cannot extend type: '"+otherType+"'");
-      }
 
-      var otherUserObj = validationRules[otherType][otherName];
+      var otherUserObj = ruleManager.getRawRule(otherName);
       //check not extending itself
       if(this.userObj === otherUserObj)
-        return this.warn("cannot extend self");
+        return this.warn("Cannot extend self");
+
       //type check
-      if($.isPlainObject(otherUserObj)) {
+      if($.isPlainObject(otherUserObj))
         this.userObj = $.extend(true, {}, otherUserObj, this.userObj);
-      } else {
-        return this.warn("cannot extend: '"+otherName+"'");
-      }
+      else
+        return this.warn("Cannot extend: '"+otherName+"'");
     }
 
     //handle object.fn
@@ -905,10 +897,10 @@ var Rule = BaseClass.extend({
 var ruleManager = null;
 (function() {
 
-  //cached token parser - must be in form 'one(1,2,two(3,4),three[scope](6,7),five)'
-  var parse = _.memoize(function(str) {
+  //cached token parser - must be in form 'one(1,2,two(3,4),three.scope(6,7),five)'
+  var parse = Utils.memoize(function(str) {
 
-    var chars = str.split(""), 
+    var chars = str.split(""),
         rule, rules = [],
         c, m, depth = 0;
     
@@ -920,19 +912,19 @@ var ruleManager = null;
       if(depth > 1) return null;
       if(c === ',' && depth === 1) chars[i] = ";";
     }
-    str = chars.join('');
     
     //bracket check
     if(depth !== 0) return null;
     
-    //convert to object
-    $.each(str.split(','), function(i, rule) {
-      m = rule.match(/^(\w+)(\[(\w+)\])?(\((\w+(\;\w)*)\))?$/);
-      if(!m) return;
+    //convert string in format: "name.scope#id(args...)" to object
+    $.each(chars.join('').split(','), function(i, rule) {
+      m = rule.match(/^(\w+)(\.(\w+))?(\#(\w+))?(\((\w+(\;\w)*)\))?$/);
+      if(!m) return warn("Invalid validate attribute: " + str);
       rule = {};
       rule.name = m[1];
       if(m[3]) rule.scope = m[3];
-      if(m[5]) rule.args = m[5].split(';');
+      if(m[5]) rule.id = m[5];
+      if(m[7]) rule.args = m[7].split(';');
       rules.push(rule);
     });
     return rules;
@@ -943,12 +935,16 @@ var ruleManager = null;
       builtRules = {};
 
   var addRules = function(type,obj) {
-    //check format
-    for(var name in obj)
+    //check format, insert type
+    for(var name in obj){
       if(rawRules[name])
         warn("validator '%s' already exists", name);
 
-    obj.type = type;
+      if($.isFunction(obj[name]))
+        obj[name] = { fn: obj[name] };
+
+      obj[name].type = type;
+    }
 
     //deep extend rules by obj
     $.extend(true, rawRules, obj);
@@ -963,15 +959,24 @@ var ruleManager = null;
     addRules('group', obj);
   };
 
+  var getRawRule = function(name) {
+    return rawRules[name];
+  };
+
   var getRule = function(name) {
-    var r = builtRules[name];
-    if(!r) {
-      r = new Rule(name, rawRules[name]);
+    var r = builtRules[name],
+        obj = rawRules[name];
+
+    if(!obj) {
+      warn("Missing rule: " + name);
+    } else if(!r) {
+      r = new Rule(name, obj);
       builtRules[name] = r;
     }
     return r;
   };
 
+  //extract an objectified version of the "data-validate" attribute
   var parseAttribute = function(validationElem) {
     var attrName = validationElem.form.options.validateAttribute,
         attr = validationElem.elem.attr(attrName);
@@ -979,6 +984,7 @@ var ruleManager = null;
     return parse(attr);
   };
 
+  //add a rule property to the above object
   var parseElement = function(validationElem) {
 
     var required = false,
@@ -986,7 +992,7 @@ var ruleManager = null;
         results = [];
 
     if(validationElem.type !== 'ValidationField')
-      return warn("cannot get rules from invalid type");
+      return warn("Cannot get rules from invalid type");
 
     if(!validationElem.elem) return [];
 
@@ -994,9 +1000,17 @@ var ruleManager = null;
 
     if(!results) return [];
 
-    return $.map(results, function(result) {
+    //add rule instances
+    results = $.map(results, function(result) {
+      //special required case
+      if(result.name === 'required')
+        required = true;
+
       result.rule = getRule(result.name);
+      return result;
     });
+    results.required = required;
+    return results;
   };
 
   //public interface
@@ -1004,6 +1018,7 @@ var ruleManager = null;
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     getRule: getRule,
+    getRawRule: getRawRule,
     parseAttribute: parseAttribute,
     parseElement: parseElement
   };
@@ -1026,7 +1041,7 @@ var ValidationForm = null;
       this.bindAll();
       this.elem = elem;
       this.setName();
-      this.executions = [];
+      this.execution = null;
 
       if(!elem.length || elem.data('asyncValidator'))
         return false;
@@ -1102,6 +1117,7 @@ var ValidationForm = null;
       //instance variables
       this.form = form;
       this.options = form.options;
+      this.groups = form.groups;
       this.ruleNames = null;
       this.fieldset = null;
     },
@@ -1111,39 +1127,26 @@ var ValidationForm = null;
       var exec = new FieldExecution(this);
       exec.execute().always(callback);
       return undefined;
-    }
-  });
+    },
 
-  /* ===================================== *
-   * Field Set Wrapper
-   * ===================================== */
+    update: function() {
+      this.rules = ruleManager.parseElement(this);
 
-  var ValidationGroup = ValidationElement.extend({
-
-    //class/default variables
-    type: "ValidationGroup",
-    nongroup: false,
-
-    init: function(elem, form) {
-
-      //elem is allowed to be an empty selector
-      //represents a 'no_group' set - the set of individual fields
-
-      this._super(elem);
-      //sanity checks
-      if(!elem || !elem.jquery)
-        return;
-
-      if(!elem.length) {
-        this.nongroup = true;
-        this.name += "_nongroup";
+      //manage this field within shared groups
+      for(var i = 0; i < this.rules.length; ++i) {
+        var r = this.rules[i];
+        if(r.rule.type !== 'group') continue;
+        if(!this.groups[r.name])
+          this.groups[r.name] = {};
+        var scope = r.scope || 'default';
+        if(!this.groups[r.name][scope])
+          this.groups[r.name][scope] = new TypedSet(ValidationField);
+        this.groups[r.name][scope].add(this);
       }
-
-      this.form = form;
-      this.options = form.options;
-      this.fields = new TypedSet(ValidationField);
     }
+
   });
+
   /* ===================================== *
    * Form Wrapper
    * ===================================== */
@@ -1204,6 +1207,7 @@ var ValidationForm = null;
     updateFields: function() {
       var sel = "["+this.options.validateAttribute+"]";
       this.elem.find(sel).each(this.updateField);
+
       // this.log("print form", true);
       // this.print();
       // this.log(null, false);
@@ -1231,17 +1235,9 @@ var ValidationForm = null;
         this.fields.add(field);
       }
 
-      this.updateGroup(field);
+      field.update();
 
       return field;
-    },
-
-    updateGroup: function(field) {
-      
-      // fieldsets = new TypedSet(ValidationGroup);
-      var rules = ruleManager.parseAttribute(field);
-
-      this.log(JSON.stringify(rules,null,2));
     },
 
     /* ===================================== *
@@ -1252,7 +1248,6 @@ var ValidationForm = null;
 
       var submitForm = false;
 
-
       if(this.submitPending)
         this.warn("pending...");
 
@@ -1261,14 +1256,7 @@ var ValidationForm = null;
           this.submitResult === undefined) {
 
         this.submitPending = true;
-
-        var _this = this;
-        this.validate(function(error) {
-          _this.submitPending = false;
-          _this.submitResult = !error;
-          _this.elem.submit(); //trigger submit again, though with a result
-          _this.submitResult = undefined;
-        });
+        this.validate(this.doSubmit);
 
       //have result
       } else if (this.submitResult !== undefined) {
@@ -1279,18 +1267,22 @@ var ValidationForm = null;
       return submitForm;
     },
 
-    onKeyup: function(event) {
-
-      if(this.options.hideErrorOnChange)
-        this.options.prompt($(event.currentTarget),false);
-
+    doSubmit: function(err, result) {
+      this.submitPending = false;
+      this.submitResult = !err;
+      this.elem.submit(); //trigger onSubmit, though with a result
+      this.submitResult = undefined;
     },
 
-    onValidate: function(event) {
+    onKeyup: function(event) {
+      if(this.options.hideErrorOnChange)
+        this.options.prompt($(event.currentTarget),false);
+    },
 
+    //user triggered validate field event
+    onValidate: function(event) {
       var elem = $(event.currentTarget);
       var field = elem.data('asyncValidator') || this.updateField(elem);
-
       field.log("validate");
       field.validate($.noop);
     },
@@ -1302,14 +1294,16 @@ var ValidationForm = null;
     validate: function(callback) {
       this.updateFields();
       var exec = new FormExecution(this);
-      exec.execute().always(callback);
+      exec.execute().always(function(e) {
+        (callback || $.noop)(e.result);
+      });
       return undefined;
     },
 
     //listening for 'validate' event
     scrollFocus: function() {
 
-      var lastExec = this.executions[this.executions.length-1];
+      var lastExec = this.execution;
 
       if(!lastExec.errors.length) return;
 
@@ -1340,17 +1334,20 @@ var FormExecution = null,
   //set in private scope
   var Execution = BaseClass.extend({
 
+    type: "Execution",
+
     STATUS: {
       NOT_STARTED: 0,
       RUNNING: 1,
-      COMPLETE: 2
+      COMPLETE: 2,
+      WAITING_FOR_GROUP: 3
     },
 
     init: function(element, parent) {
       //corresponding <Form|Fieldset|Field>Element class
       this.element = element;
       if(element) {
-        element.executions.push(this);
+        element.execution = this;
         this.domElem = element.elem;
       }
       //parent Execution class
@@ -1384,19 +1381,36 @@ var FormExecution = null,
     },
 
     execute: function() {
-      this.log('execute', true);
+      // this.log('execute', true);
       this.status = this.STATUS.RUNNING;
+      if(this.domElem)
+        this.domElem.triggerHandler("validating");
     },
 
-    executed: function(result) {
-      this.log('', false);
-      this.log('done: ' + result);
+    executed: function(exec) {
+      // this.log('', false);
+      this.log('done: ' + exec.success);
       this.status = this.STATUS.COMPLETE;
+      this.success = exec.success;
+      this.result = exec.result;
+
+      if(this.domElem)
+        this.domElem.triggerHandler("validated", arguments);
 
       //TODO fill the errors array per execution
       // if(!!result)
       //   this.errors.push({elem: this.element, msg: result});
 
+    },
+
+    //resolves or rejects the execution's deferred object 'd'
+    resolve: function() {
+      if(!this.d || !this.d.resolve) throw "Invalid Deferred Object";
+      this.nextTick(this.d.resolve, [this], 0);
+    },
+    reject: function() {
+      if(!this.d || !this.d.reject) throw "Invalid Deferred Object";
+      this.nextTick(this.d.reject, [this], 0);
     },
 
     skipValidations: function() {
@@ -1419,35 +1433,30 @@ var FormExecution = null,
   //set in plugin scope
   FormExecution = Execution.extend({
     type: "FormExecution",
+
     init: function(form) {
       this._super(form);
-
       this.ajaxs = [];
 
-      //set groups
-      var _this = this;
-      this.executables = [];
-      this.element.fields.map(function(f) {
-        _this.executables.push(new FieldExecution(f, _this));
-      });
+      //prepare child executables
+      this.children = this.element.fields.map($.proxy(function(f) {
+        return new FieldExecution(f, this);
+      }, this));
     },
 
     execute: function() {
       this._super();
-      this.log("exec groups #" + this.executables.length);
-      this.domElem.triggerHandler("validating");
-      return this.parallelize(this.executables).always(this.executed);
+      this.log("exec fields #" + this.children.length);
+      this.d = this.parallelize(this.children).always(this.executed);
+      return this.d;
     },
 
-    executed: function(result) {
-      this._super(result);
-      this.element.log('result: ' + (result===undefined ? 'Passed' : 'Failed: ' + result));
-      this.domElem.triggerHandler("validated", arguments);
+    executed: function(exec) {
+      this._super(exec);
+      this.element.log('result: ' + (exec.success ? 'Passed' : 'Failed: ' + exec.result));
     }
 
   });
-
-
 
   //set in plugin scope
   FieldExecution = Execution.extend({
@@ -1455,110 +1464,84 @@ var FormExecution = null,
 
     init: function(field, parent) {
       this._super(field, parent);
-
       this.children = [];
-
-      if(parent instanceof GroupExecution) {
-        this.group = parent;
-      }
+      this.executables = null;
     },
 
     execute: function() {
-
       this._super();
-      this.skip = true;
-
-      //execute fieldset first
-      if(!this.group && this.element.fieldset.nongroup === false) {
-
-        this.log("redirect to group exec: " + this.element.name);
-        //no-group, build, execute
-        this.group = new GroupExecution(this.element.fieldset, this);
-        return this.group.execute().always(function() {
-          log('',false);
-        });
-
-      }
-
-      this.domElem.triggerHandler("validating");
 
       //execute rules
       var ruleParams = ruleManager.parseElement(this.element);
-      var d = null;
+      this.d = null;
 
+      //skip check
       if(this.skipValidations()) {
-
         this.log("skip");
-
       } else if(!ruleParams.required && !$.trim(this.domElem.val())) {
         this.log("not required");
-
-      } else if($.isArray(ruleParams) && ruleParams.length) {
-        //has rules - validate!
-        var _this = this;
-
-        //prepare rule executions
-        var executables = $.map(ruleParams, function(r) {
-          return new RuleExecution(r, _this);
-        });
-
-        this.log("exec rules #%s", executables.length);
-        d = this.serialize(executables);
-        this.skip = false;
-
-      } else {
+      } else if(ruleParams.length === 0) {
         this.log("no validators");
+      
+      //ready!
+      } else {
+        this.children = $.map(ruleParams, $.proxy(function(r) {
+          if(r.rule.type === 'group')
+            return new GroupRuleExecution(r, this);
+          else
+            return new RuleExecution(r, this);
+        }, this));
+
+        // this.log("exec rules #%s", this.children.length);
+        this.d = this.serialize(this.children);
       }
 
-      if(this.skip === true) {
-        d = $.Deferred();
-        d.resolve(); //default pass
+      //pass when skipping
+      this.skip = this.d === null;
+      if(this.d === null) {
+        this.d = $.Deferred();
+        this.resolve();
       }
 
-      d.always(this.executed);
-      return d.promise();
-
+      this.d.always(this.executed);
+      return this.d.promise();
     },
 
-    executed: function(result) {
+    executed: function(exec) {
 
-      this._super(result);
-      this.log('validated');
-      var errored = !!result;
+      this._super(exec);
+      var errored = !exec.success;
       var opts = this.element.form.options;
 
       //show/hide prompt
-      opts.prompt(this.domElem, result);
+      opts.prompt(this.domElem, exec.result);
 
-      //trigger event on field
-      this.domElem.triggerHandler("validated", [result]);
+      // if(opts.errorClass)
+      //   opts.errorContainer(this.domElem).toggleClass(opts.errorClass, errored);
 
-      if(opts.errorClass)
-        opts.errorContainer(this.domElem).toggleClass(opts.errorClass, errored);
+      // var parentGroup = this.parent,
+      //     parentParent = parentGroup && parentGroup.parent,
+      //     trigger = null,
+      //     isTrigger = false;
 
-      var parentGroup = this.parent,
-          parentParent = parentGroup && parentGroup.parent,
-          trigger = null,
-          isTrigger = false;
+      // if(errored && parentParent && parentParent instanceof FormExecution)
+      //   this.parent.parent.errors.push({
+      //     message: result,
+      //     field: this.domElem
+      //   });
 
-      if(errored && parentParent && parentParent instanceof FormExecution)
-        this.parent.parent.errors.push({
-          message: result,
-          field: this.domElem
-        });
+      // if(parentGroup)
+      //   trigger = parentGroup.triggerField();
 
-      if(parentGroup)
-        trigger = parentGroup.triggerField();
+      // isTrigger = trigger ? trigger.equals(this.domElem) : true;
 
-      isTrigger = trigger ? trigger.equals(this.domElem) : true;
-
-      if(isTrigger && (!parentGroup || parentGroup.parent instanceof FieldExecution))
-        this.element.options.track(
-          'Validate Field',
-          this.element.form.name + " " + this.element.name,
-          errored ? result : this.skip ? 'Skip' : 'Valid',
-          errored ? 0 : 1
-        );
+      // if(isTrigger && (!parentGroup || parentGroup.parent instanceof FieldExecution))
+      //   this.element.options.track(
+      //     'Validate Field',
+      //     this.element.form.name + " " + this.element.name,
+      //     errored ? result : this.skip ? 'Skip' : 'Valid',
+      //     errored ? 0 : 1
+      //   );
     }
   });
 
@@ -1568,82 +1551,162 @@ var FormExecution = null,
 
     init: function(ruleParamObj, parent) {
       this._super(null, parent);
-
       this.rule = ruleParamObj.rule;
       this.params = ruleParamObj.params;
       this.validationElem = this.parent.element;
       this.options = this.validationElem.options;
+      this.rObj = {};
+    },
+
+    //the function that gets called when
+    //rules return or callback
+    callback: function(result) {
+      clearTimeout(this.t);
+      this.callbackCount++;
+      this.log("callback #" + this.callbackCount + " with: " + result);
+      if(this.callbackCount > 1) return;
+
+      var passed = result === undefined || result === true;
+
+      //success
+      if(passed) {
+        this.resolve();
+      } else {
+        this.result = result;
+        this.reject();
+      }
+    },
+
+    timeout: function() {
+      this.warn("timeout!");
+      this.callback("Timeout");
     },
 
     execute: function() {
       this._super();
-      var d = $.Deferred(),
-          rule = this.rule, _this = this;
+      this.callbackCount = 0;
+      this.d = $.Deferred();
 
-      d.always(this.executed);
-
-      var callbackCount = 0;
-      var callback = function(result) {
-        clearTimeout(t);
-        callbackCount++;
-        _this.log("callback #" + callbackCount + " with: " + result);
-        if(callbackCount > 1) return;
-
-        var passed = result === undefined || result === true;
-        if(passed)
-          d.resolve();
-        else
-          d.reject(result);
-      };
-
-      var validationElem = this.validationElem;
+      this.d.always(this.executed);
 
       //sanity checks
-      if(!validationElem || !rule.ready) {
-        this.warn(!validationElem ? 'invalid parent.' : 'not ready.');
+      if(!this.validationElem || !this.rule.ready) {
+        this.warn(this.validationElem ? 'not ready.' : 'invalid parent.');
         callback();
         return d.promise();
-      } else {
-        //READY!
-        this.log("run");
       }
 
+      //finally execute validator
+      var result = this.rule.fn(this.buildInterface());
+
+      //used return statement
+      if(result !== undefined)
+        this.nextTick(this.callback, [result]);
+
+      return this.d.promise();
+    },
+
+    buildInterface: function() {
+      //READY!
+      this.log("run");
+
       //watch for timeouts
-      var t = setTimeout(function() {
-        _this.warn("timeout!");
-        callback("Timeout");
-      }, 10000);
+      this.t = setTimeout(this.timeout, 10000);
 
-
-      var currInterface = {};
 
       //find trigger field in a group execution
       var triggerField = null;
-      if(this.parent instanceof GroupExecution)
-        currInterface.triggerField = this.parent.triggerField();
+      // if(this.parent instanceof GroupExecution)
+      //   currInterface.triggerField = this.parent.triggerField();
 
-
-
-      currInterface.field = validationElem.elem;
-      currInterface.form =  validationElem.form.elem;
-      currInterface.callback = callback;
-      currInterface.params = this.params;
-      currInterface.args = this.params;
-      currInterface.ajax = function(userOpts) {
-        ajaxHelper(userOpts, rule, currInterface, validationElem);
+      this.rObj.field = this.validationElem.elem;
+      this.rObj.form =  this.validationElem.form.elem;
+      this.rObj.callback = this.callback;
+      this.rObj.params = this.params;
+      this.rObj.args = this.params;
+      this.rObj.ajax = function(userOpts) {
+        ajaxHelper(userOpts, this.rule, this.rObj, this.validationElem);
       };
 
       //build the rule interface 'r'
-      var ruleInterface = rule.buildInterface(currInterface);
-
-      //finally execute validator
-      var result = rule.fn(ruleInterface);
-
-      //instant callback - becomes synchronous
-      if(result !== undefined) callback(result);
-
-      return d.promise();
+      return this.rule.buildInterface(this.rObj);
     }
+
+  });
+
+  var GroupRuleExecution = RuleExecution.extend({
+
+    type: "GroupRuleExecution",
+
+    init: function(ruleParamObj, parent) {
+      this._super(ruleParamObj, parent);
+      this.group = ruleParamObj.name;
+      this.id = ruleParamObj.id;
+      this.scope = ruleParamObj.scope || 'default';
+    },
+
+    execute: function() {
+      var fieldExec = this.parent,
+          execute = $.proxy(this._super, this),          
+          groupSet = this.validationElem.groups[this.group][this.scope];
+
+      if(!groupSet) throw "Missing Group Set";
+
+      return fieldExec.parent ?
+        this.executeForm  (groupSet, execute) :
+        this.executeSingle(groupSet, execute);
+    },
+
+    //if run from the form
+    //wait for other fields, cancel if others fail before reaching the group
+    executeForm: function(groupSet, execute) {
+      this.log("FORM");
+
+      var ready = false;
+
+      groupSet.each(function(field) {
+
+        var exec = field.execution;
+        if(!exec) return;
+        console.log(exec);
+      });
+
+      var d = execute();
+
+      return d;
+    },
+
+
+    //if run from editing the field
+    //only trigger others if each sibling's last execution got up to the group
+    executeSingle: function(groupSet, execute) {
+      this.log("SINGLE");
+
+      var ready = true;
+
+      groupSet.each(function(field) {
+
+        var exec = field.execution;
+        if(!exec) {
+          ready = false;
+        }
+        //TODO
+        return ready;
+      });
+
+      //deferred
+      var d = null;
+      if(ready) {
+        d = execute();
+      } else {
+        d = $.Deferred();
+        this.reject();
+      }
+
+      return d;
+    }
+
+
   });
 
 })(); 
@@ -1957,21 +2020,6 @@ log("plugin added.");
    *      the field validations (default: 'after')
    */
   $.asyncValidator.addGroupRules({
-    required: {
-      run: 'before',
-      extend: "field:required",
-      fn: function(r) {
-
-        var result = true;
-
-        r.fields().each(function() {
-          if(result !== true) return;
-          result = r.requiredField(r, $(this));
-        });
-
-        return result;
-      }
-    },
 
     dateRange: {
       run: 'after',

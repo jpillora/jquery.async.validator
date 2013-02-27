@@ -10,17 +10,47 @@
  -->
 
 <!-- Local Test -->
-
 <script src="../../dist/jquery.async.validator.prompt.js"></script>
 
 <script type="text/javascript">
   
   $.asyncValidator({ debug: true });
 
+  $.asyncValidator.addRules({
+    a: function(r) { return true; },
+    b: function(r) { return true; },
+    c: function(r) { return "It failed."; },
+    d: function(r) { return true; }
+  });
+  $.asyncValidator.addGroupRules({
+    g: function(r) {
+      return true;  
+    }
+  });
+
+  $(function() {
+
+    $(document).on("validating", "*", function() {
+      console.log(this);
+    });
+
+
+    var selector = "#1"
+    setTimeout(function() {
+      $(selector).validate(function(result) {
+        console.log("DONE", result);
+      });
+    }, 1000);
+
+  });
+
+
 </script>
 
 <form>
-  <input value="42" data-validate="required,number,g[scope](test)"/>
-  <input value="abc" data-validate="number"/>
+  <input id="1" value="42" data-validate="a,b,g,d"/>
+  <input id="2" value="abc" data-validate="g"/>
+  <input id="3" value="abc" data-validate="b,g,c,d"/>
+  <input id="4" value="" data-validate="d"/>
   <input type="submit"/>
 </form>

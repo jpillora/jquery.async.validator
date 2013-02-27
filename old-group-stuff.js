@@ -133,3 +133,36 @@
     }
 
   });
+
+
+  
+  /* ===================================== *
+   * Field Set Wrapper
+   * ===================================== */
+
+  var ValidationGroup = ValidationElement.extend({
+
+    //class/default variables
+    type: "ValidationGroup",
+    nongroup: false,
+
+    init: function(elem, form) {
+
+      //elem is allowed to be an empty selector
+      //represents a 'no_group' set - the set of individual fields
+
+      this._super(elem);
+      //sanity checks
+      if(!elem || !elem.jquery)
+        return;
+
+      if(!elem.length) {
+        this.nongroup = true;
+        this.name += "_nongroup";
+      }
+
+      this.form = form;
+      this.options = form.options;
+      this.fields = new TypedSet(ValidationField);
+    }
+  });

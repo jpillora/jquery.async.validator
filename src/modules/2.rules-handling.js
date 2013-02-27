@@ -2,54 +2,45 @@
  * Rule Class
  * ===================================== */
 
+// the Rule class will store all state relating to
+// the user definition, all rule state from the DOM
+// will be passes into the function inside an
+// instance of a RuleExecution
+
 var Rule = BaseClass.extend({
 
-  init: function(type,name,userObj){
+  init: function(name, userObj){
     this.name = name;
-    this.type = type;
     this.buildFn(userObj);
   },
 
   //extracts the validation function out of the user defined object
   buildFn: function(userObj) {
 
-    //object is already a function...
-    if($.isFunction(userObj)) {
-      this.fn = userObj;
-      this.userObj = null;
-      this.ready = true;
-      return;
-    } else if(!$.isPlainObject(userObj)) {
+    if(!$.isPlainObject(userObj))
       return this.warn("rule definition must be a function or an object");
-    }
-
-    //object needs to be built into a funtion...
-
+    
     //clone object to keep a canonical version intact
     this.userObj = $.extend(true, {}, userObj);
 
+    this.type = userObj.type;
+
     //handle object.extend (may inherit a object.fn)
     while($.type(this.userObj.extend) === 'string') {
-      //extend using another validator -> validator type:name or just name
-      var m = this.userObj.extend.match(/^((\w+):)?(\w+)$/);
-      var otherType = m[2] || this.type;
-      var otherName = m[3];
+      //extend using another validator -> validator name
+      var otherName = this.userObj.extend;
       delete this.userObj.extend;
-      //check type exists
-      if(!validationRules[otherType]) {
-        return this.warn("cannot extend type: '"+otherType+"'");
-      }
 
-      var otherUserObj = validationRules[otherType][otherName];
+      var otherUserObj = ruleManager.getRawRule(otherName);
       //check not extending itself
       if(this.userObj === otherUserObj)
-        return this.warn("cannot extend self");
+        return this.warn("Cannot extend self");
+
       //type check
-      if($.isPlainObject(otherUserObj)) {
+      if($.isPlainObject(otherUserObj))
         this.userObj = $.extend(true, {}, otherUserObj, this.userObj);
-      } else {
-        return this.warn("cannot extend: '"+otherName+"'");
-      }
+      else
+        return this.warn("Cannot extend: '"+otherName+"'");
     }
 
     //handle object.fn
@@ -128,10 +119,10 @@ var Rule = BaseClass.extend({
 var ruleManager = null;
 (function() {
 
-  //cached token parser - must be in form 'one(1,2,two(3,4),three[scope](6,7),five)'
-  var parse = _.memoize(function(str) {
+  //cached token parser - must be in form 'one(1,2,two(3,4),three.scope(6,7),five)'
+  var parse = Utils.memoize(function(str) {
 
-    var chars = str.split(""), 
+    var chars = str.split(""),
         rule, rules = [],
         c, m, depth = 0;
     
@@ -143,19 +134,19 @@ var ruleManager = null;
       if(depth > 1) return null;
       if(c === ',' && depth === 1) chars[i] = ";";
     }
-    str = chars.join('');
     
     //bracket check
     if(depth !== 0) return null;
     
-    //convert to object
-    $.each(str.split(','), function(i, rule) {
-      m = rule.match(/^(\w+)(\[(\w+)\])?(\((\w+(\;\w)*)\))?$/);
-      if(!m) return;
+    //convert string in format: "name.scope#id(args...)" to object
+    $.each(chars.join('').split(','), function(i, rule) {
+      m = rule.match(/^(\w+)(\.(\w+))?(\#(\w+))?(\((\w+(\;\w)*)\))?$/);
+      if(!m) return warn("Invalid validate attribute: " + str);
       rule = {};
       rule.name = m[1];
       if(m[3]) rule.scope = m[3];
-      if(m[5]) rule.args = m[5].split(';');
+      if(m[5]) rule.id = m[5];
+      if(m[7]) rule.args = m[7].split(';');
       rules.push(rule);
     });
     return rules;
@@ -166,12 +157,16 @@ var ruleManager = null;
       builtRules = {};
 
   var addRules = function(type,obj) {
-    //check format
-    for(var name in obj)
+    //check format, insert type
+    for(var name in obj){
       if(rawRules[name])
         warn("validator '%s' already exists", name);
 
-    obj.type = type;
+      if($.isFunction(obj[name]))
+        obj[name] = { fn: obj[name] };
+
+      obj[name].type = type;
+    }
 
     //deep extend rules by obj
     $.extend(true, rawRules, obj);
@@ -186,15 +181,24 @@ var ruleManager = null;
     addRules('group', obj);
   };
 
+  var getRawRule = function(name) {
+    return rawRules[name];
+  };
+
   var getRule = function(name) {
-    var r = builtRules[name];
-    if(!r) {
-      r = new Rule(name, rawRules[name]);
+    var r = builtRules[name],
+        obj = rawRules[name];
+
+    if(!obj) {
+      warn("Missing rule: " + name);
+    } else if(!r) {
+      r = new Rule(name, obj);
       builtRules[name] = r;
     }
     return r;
   };
 
+  //extract an objectified version of the "data-validate" attribute
   var parseAttribute = function(validationElem) {
     var attrName = validationElem.form.options.validateAttribute,
         attr = validationElem.elem.attr(attrName);
@@ -202,6 +206,7 @@ var ruleManager = null;
     return parse(attr);
   };
 
+  //add a rule property to the above object
   var parseElement = function(validationElem) {
 
     var required = false,
@@ -209,7 +214,7 @@ var ruleManager = null;
         results = [];
 
     if(validationElem.type !== 'ValidationField')
-      return warn("cannot get rules from invalid type");
+      return warn("Cannot get rules from invalid type");
 
     if(!validationElem.elem) return [];
 
@@ -217,9 +222,17 @@ var ruleManager = null;
 
     if(!results) return [];
 
-    return $.map(results, function(result) {
+    //add rule instances
+    results = $.map(results, function(result) {
+      //special required case
+      if(result.name === 'required')
+        required = true;
+
       result.rule = getRule(result.name);
+      return result;
     });
+    results.required = required;
+    return results;
   };
 
   //public interface
@@ -227,6 +240,7 @@ var ruleManager = null;
     addFieldRules: addFieldRules,
     addGroupRules: addGroupRules,
     getRule: getRule,
+    getRawRule: getRawRule,
     parseAttribute: parseAttribute,
     parseElement: parseElement
   };

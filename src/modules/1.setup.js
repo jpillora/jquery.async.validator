@@ -10,25 +10,18 @@ var VERSION = "0.0.1",
  * ===================================== */
 
 var globalOptions = {
-
   // Display log messages flag
   debug: false,
-
   // Attribute used to find validators
   validateAttribute: "data-validate",
-
   // Name of the event triggering field validation
   validationEventTrigger: "blur",
-
   // Automatically scroll viewport to the first error
   scroll: true,
-
   // Focus on the first input
   focusFirstField: true,
-
   // Hide error while the user is changing
   hideErrorOnChange: false,
-
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
   // What class name to apply to the 'errorContainer'
@@ -90,5 +83,13 @@ var BaseClass = Class.extend({
   bindAll: function() {
     for(var propName in this)
       this.bind(propName);
+  },
+  //enforce asynchronicity
+  nextTick: function(fn, args, ms) {
+    var _this = this;
+    return window.setTimeout(function() {
+      fn.apply(_this, args);
+    }, ms || 0);
   }
+
 }); 
