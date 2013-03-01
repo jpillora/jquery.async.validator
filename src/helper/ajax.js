@@ -6,21 +6,22 @@
 var ajaxCache = { loading: {}, loaded: {} } ;
 
 //callable from user defined rules. alias: r.ajax
-function ajaxHelper(userOpts, rule, ruleInterface, validationElem) {
+function ajaxHelper(userOpts, r) {
 
   var defaults = {
         method: "GET",
         timeout: 15 * 1000
       },
-      promptContainer = ruleInterface.triggerField || ruleInterface.field,
+      exec = r._exec,
+      promptContainer = r.triggerField || r.field,
       userSuccess = userOpts.success,
       userError   = userOpts.error,
-      options = validationElem.options,
+      options = exec.element.options,
       serialised = JSON ? JSON.stringify(userOpts) : guid();
 
   function onErrorDefault(e) {
     log("ajax error");
-    ruleInterface.callback("There has been an error");
+    r.callback("There has been an error");
   }
 
   var userCallbacks = {
@@ -63,6 +64,5 @@ function ajaxHelper(userOpts, rule, ruleInterface, validationElem) {
     error: intercept
   };
 
-  //result.ajax =
-  $.ajax($.extend(defaults, userOpts, realCallbacks));
+  exec.ajax = $.ajax($.extend(defaults, userOpts, realCallbacks));
 }

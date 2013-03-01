@@ -27,12 +27,14 @@ var FormExecution = null,
       this.element = element;
       if(element) {
         element.execution = this;
-        this.domElem = element.elem;
+        this.options = this.element.options;
+        this.domElem = element.domElem;
       }
       //parent Execution class
       this.parent = parent;
       this.name = guid();
       this.status = this.STATUS.NOT_STARTED;
+      this.errorField = null;
       this.errors = [];
       this.bindAll();
     },
@@ -68,7 +70,7 @@ var FormExecution = null,
 
     executed: function(exec) {
       // this.log('', false);
-      this.log('done: ' + exec.success);
+      this.log('done: ' + (exec.rule ? exec.rule.name+': ' : '') + exec.success);
       this.status = this.STATUS.COMPLETE;
       this.success = exec.success;
       this.result = exec.result;
@@ -76,20 +78,24 @@ var FormExecution = null,
       if(this.domElem)
         this.domElem.triggerHandler("validated", arguments);
 
-      //TODO fill the errors array per execution
-      // if(!!result)
-      //   this.errors.push({elem: this.element, msg: result});
+      //fill the errors array per execution
+      if(this.success)
+        this.errors.push({domElem: this.element, msg: this.result});
 
     },
 
     //resolves or rejects the execution's deferred object 'd'
     resolve: function() {
       if(!this.d || !this.d.resolve) throw "Invalid Deferred Object";
+      if(!this.success) this.success = true;
       this.nextTick(this.d.resolve, [this], 0);
+      return this.d.promise();
     },
     reject: function() {
       if(!this.d || !this.d.reject) throw "Invalid Deferred Object";
+      if(!this.success) this.success = false;
       this.nextTick(this.d.reject, [this], 0);
+      return this.d.promise();
     },
 
     skipValidations: function() {
@@ -106,7 +112,48 @@ var FormExecution = null,
         return true;
 
       return false;
+    },
+
+    //array of { domElem: ... message: ... }
+    getErrorFields: function() {
+      var list = [],
+          _this = this,
+          domElem,
+          add = function(domElem, message) {
+            list.push({ domElem: domElem, result: message });
+          };
+
+      var r = this.r, errorFields = null;
+      if(r) errorFields = r.errorFields || r.errorField;
+
+      //id string
+      if(typeof errorFields === 'string') {
+        domElem = this.r.groupElem(errorFields);
+        if(domElem)
+          add(domElem, this.result);
+
+      //ids array
+      } else if($.isArray(errorFields)) {
+        $.each(errorFields, function(i, id) {
+          domElem = _this.r.groupElem(id);
+          if(domElem)
+            add(domElem, _this.result);
+        });
+      //ids -> message object
+      } else if($.isPlainObject(errorFields)) {
+        for(var id in errorFields) {
+          domElem = this.r.groupElem(id);
+          if(domElem)
+            add(domElem, errorFields[id]);
+        }
+      //default
+      } else {
+        add(this.element.domElem, this.result);
+      }
+
+      return list;
     }
+
   });
 
   //set in plugin scope
@@ -144,7 +191,6 @@ var FormExecution = null,
     init: function(field, parent) {
       this._super(field, parent);
       this.children = [];
-      this.executables = null;
     },
 
     execute: function() {
@@ -157,7 +203,9 @@ var FormExecution = null,
       //skip check
       if(this.skipValidations()) {
         this.log("skip");
-      } else if(!ruleParams.required && !$.trim(this.domElem.val())) {
+      } else if(this.options.skipNotRequired && 
+                !ruleParams.required &&
+                !$.trim(this.domElem.val())) {
         this.log("not required");
       } else if(ruleParams.length === 0) {
         this.log("no validators");
@@ -187,32 +235,9 @@ var FormExecution = null,
     },
 
     executed: function(exec) {
-
       this._super(exec);
-      var errored = !exec.success;
-      var opts = this.element.form.options;
 
-      //show/hide prompt
-      opts.prompt(this.domElem, exec.result);
-
-      // if(opts.errorClass)
-      //   opts.errorContainer(this.domElem).toggleClass(opts.errorClass, errored);
-
-      // var parentGroup = this.parent,
-      //     parentParent = parentGroup && parentGroup.parent,
-      //     trigger = null,
-      //     isTrigger = false;
-
-      // if(errored && parentParent && parentParent instanceof FormExecution)
-      //   this.parent.parent.errors.push({
-      //     message: result,
-      //     field: this.domElem
-      //   });
-
-      // if(parentGroup)
-      //   trigger = parentGroup.triggerField();
-
-      // isTrigger = trigger ? trigger.equals(this.domElem) : true;
+      this.element.displayErrors(exec);
 
       // if(isTrigger && (!parentGroup || parentGroup.parent instanceof FieldExecution))
       //   this.element.options.track(
@@ -221,7 +246,10 @@ var FormExecution = null,
       //     errored ? result : this.skip ? 'Skip' : 'Valid',
       //     errored ? 0 : 1
       //   );
+
+      this.log("FINITO ! " + exec.name);
     }
+    
   });
 
   //set in private scope
@@ -230,10 +258,14 @@ var FormExecution = null,
 
     init: function(ruleParamObj, parent) {
       this._super(null, parent);
+
+      this.d = $.Deferred();
+      this.d.always(this.executed);
+
       this.rule = ruleParamObj.rule;
       this.params = ruleParamObj.params;
-      this.validationElem = this.parent.element;
-      this.options = this.validationElem.options;
+      this.element = this.parent.element;
+      this.options = this.element.options;
       this.rObj = {};
     },
 
@@ -242,7 +274,7 @@ var FormExecution = null,
     callback: function(result) {
       clearTimeout(this.t);
       this.callbackCount++;
-      this.log("callback #" + this.callbackCount + " with: " + result);
+      // this.log("callback #" + this.callbackCount + " with: " + result);
       if(this.callbackCount > 1) return;
 
       var passed = result === undefined || result === true;
@@ -264,51 +296,23 @@ var FormExecution = null,
     execute: function() {
       this._super();
       this.callbackCount = 0;
-      this.d = $.Deferred();
-
-      this.d.always(this.executed);
 
       //sanity checks
-      if(!this.validationElem || !this.rule.ready) {
-        this.warn(this.validationElem ? 'not ready.' : 'invalid parent.');
-        callback();
-        return d.promise();
+      if(!this.element || !this.rule.ready) {
+        this.warn(this.element ? 'not  ready.' : 'invalid parent.');
+        return this.resolve();
       }
 
+      this.t = setTimeout(this.timeout, 10000);
+      this.r = this.rule.buildInterface(this);
       //finally execute validator
-      var result = this.rule.fn(this.buildInterface());
+      var result = this.rule.fn(this.r);
 
       //used return statement
       if(result !== undefined)
         this.nextTick(this.callback, [result]);
 
       return this.d.promise();
-    },
-
-    buildInterface: function() {
-      //READY!
-      this.log("run");
-
-      //watch for timeouts
-      this.t = setTimeout(this.timeout, 10000);
-
-
-      //find trigger field in a group execution
-      var triggerField = null;
-      // if(this.parent instanceof GroupExecution)
-      //   currInterface.triggerField = this.parent.triggerField();
-
-      this.rObj.field = this.validationElem.elem;
-      this.rObj.form =  this.validationElem.form.elem;
-      this.rObj.callback = this.callback;
-      this.rObj.params = this.params;
-      this.rObj.args = this.params;
-      this.rObj.ajax = function(userOpts) {
-        ajaxHelper(userOpts, this.rule, this.rObj, this.validationElem);
-      };
-
-      //build the rule interface 'r'
-      return this.rule.buildInterface(this.rObj);
     }
 
   });
@@ -325,64 +329,120 @@ var FormExecution = null,
     },
 
     execute: function() {
-      var fieldExec = this.parent,
-          execute = $.proxy(this._super, this),          
-          groupSet = this.validationElem.groups[this.group][this.scope];
 
-      if(!groupSet) throw "Missing Group Set";
+      this.realExecute = $.proxy(this._super, this);
 
-      return fieldExec.parent ?
-        this.executeForm  (groupSet, execute) :
-        this.executeSingle(groupSet, execute);
+      var groupSet = this.element.groups[this.group][this.scope];
+
+      if(!groupSet)
+        throw "Missing Group Set";
+      if(groupSet.size() === 1)
+        this.warn("Group only has 1 field. Consider a field rule.");
+
+      this.getSiblings(groupSet);
+
+      return this.parent.parent ?
+        this.executeAll() :
+        this.executeOne();
+    },
+
+    //ensures that another execution is a member the group
+    isMember: function(that) {
+      return that.type === "GroupRuleExecution" &&
+             this.group === that.group &&
+             this.scope === that.scope;
+    },
+
+    //gets an array of sibling executions which are ready to be linked
+    getSiblings: function(groupSet) {
+
+      var ready = true, siblings = [], _this = this;
+
+      //get all fields in the group
+      groupSet.each(function(field) {
+        //get field's current execution
+        var f = field.execution;
+
+        //skip self
+        if(_this.element === field) return;
+
+        //no execution to check
+        if(!f) ready = false;
+
+        //check child rule execs
+        var last = null;
+        if(ready)
+        $.each(f.children, function(i, rule) {
+          //if the sibling group execution
+
+          _this.log(rule);
+
+          if(_this.isMember(rule)) {
+            siblings.push(rule);
+            //does not have a previously complete execution
+            //mark not ready
+            if(last && (last.status !== last.STATUS.COMPLETE || !last.success)) {
+              ready = false;
+              return false;
+            }
+
+            // _this.log(field)
+            // _this.log("sibling: " + rule.rule);
+          }
+          last = rule;
+        });
+
+        //only keep checking if not cancelled
+        return ready;
+      });
+
+      this.siblings = ready ? siblings : null;
+      this.members = ready ? siblings.concat([this]) : null;
     },
 
     //if run from the form
     //wait for other fields, cancel if others fail before reaching the group
-    executeForm: function(groupSet, execute) {
-      this.log("FORM");
+    executeAll: function() {
+      this.log("ALL");
 
-      var ready = false;
+      var _this = this;
 
-      groupSet.each(function(field) {
+      //ready ! each member of the group
+      //is up to the group validator
+      if(this.siblings) {
+        $.each(this.siblings, function(i, rule) {
+          _this.log("LINK: " + rule);
+          //use the status of this group
+          //as the status of each linked
+          _this.d.done(rule.d.resolve);
+          _this.d.fail(rule.d.reject);
 
-        var exec = field.execution;
-        if(!exec) return;
-        console.log(exec);
-      });
+          //silent fail if one of the linked fields' rules
+          //fails prior to reaching the group validation
+          rule.parent.d.fail(function(exec) {
+            _this.d.reject();
+          });
+        });
+        //execute this 'd', linked siblings will run on
+        return this.realExecute();
+      }
 
-      var d = execute();
-
-      return d;
+      this.log("WAIT");
+      //not ready - wait
+      return this.d.promise();
     },
-
 
     //if run from editing the field
     //only trigger others if each sibling's last execution got up to the group
-    executeSingle: function(groupSet, execute) {
-      this.log("SINGLE");
+    executeOne: function(execute) {
+      this.log("ONE");
 
-      var ready = true;
-
-      groupSet.each(function(field) {
-
-        var exec = field.execution;
-        if(!exec) {
-          ready = false;
-        }
-        //TODO
-        return ready;
-      });
-
-      //deferred
-      var d = null;
-      if(ready) {
-        d = execute();
-      } else {
-        d = $.Deferred();
-        this.reject();
+      if(this.siblings) {
+        this.log("ONE - READY");
+        return this.realExecute();      
       }
 
-      return d;
+      return this.reject();
     }
 
 

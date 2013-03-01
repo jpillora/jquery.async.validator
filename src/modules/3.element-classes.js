@@ -12,18 +12,18 @@ var ValidationForm = null;
   var ValidationElement = BaseClass.extend({
 
     type: "ValidationElement",
-    init: function(elem) {
+    init: function(domElem) {
 
       this.bindAll();
-      this.elem = elem;
+      this.domElem = domElem;
       this.setName();
       this.execution = null;
 
-      if(!elem.length || elem.data('asyncValidator'))
+      if(!domElem.length || domElem.data('asyncValidator'))
         return false;
 
-      if(elem)
-        elem.data('asyncValidator',this);
+      if(domElem)
+        domElem.data('asyncValidator',this);
 
       return true;
     },
@@ -31,8 +31,8 @@ var ValidationForm = null;
     setName: function() {
       var name = null;
 
-      if(this.elem)
-        name = this.elem.attr('name') || this.elem.attr('id');
+      if(this.domElem)
+        name = this.domElem.attr('name') || this.domElem.attr('id');
 
       if(!name)
         name = guid();
@@ -43,15 +43,15 @@ var ValidationForm = null;
     equals: function(that) {
       var e1, e2;
 
-      if( this.elem )
-        e1 = this.elem;
+      if( this.domElem )
+        e1 = this.domElem;
       else
         return false;
 
       if( that.jquery )
         e2 = that;
-      else if( that instanceof ValidationElement && that.elem )
-        e2 = that.elem;
+      else if( that instanceof ValidationElement && that.domElem )
+        e2 = that.domElem;
 
       if(e1 && e2)
         return e1.equals(e2);
@@ -77,6 +77,7 @@ var ValidationForm = null;
         this.log(undefined, false);
       }
     }
+
   });
 
   /* ===================================== *
@@ -87,21 +88,21 @@ var ValidationForm = null;
 
     //class variables
     type: "ValidationField",
-    init: function(elem, form) {
+    init: function(domElem, form) {
       //sanity checks
-      if(!this._super(elem)) return;
+      if(!this._super(domElem)) return;
       //instance variables
       this.form = form;
       this.options = form.options;
       this.groups = form.groups;
       this.ruleNames = null;
-      this.fieldset = null;
     },
 
     //for use with $(field).validate(callback);
     validate: function(callback) {
-      var exec = new FieldExecution(this);
-      exec.execute().always(callback);
+      (new FieldExecution(this)).execute().always(function(exec) {
+        if(callback) callback(exec.result, exec.success);
+      });
       return undefined;
     },
 
@@ -119,6 +120,23 @@ var ValidationForm = null;
           this.groups[r.name][scope] = new TypedSet(ValidationField);
         this.groups[r.name][scope].add(this);
       }
+    },
+
+    displayErrors: function(exec) {
+      
+      if(exec.errorDisplayed) return;
+
+      var opts = this.options,
+          prompt = opts.prompt,
+          errorFields = exec.getErrorFields();
+
+      $.each(errorFields, function(i, err) {
+        prompt(err.domElem, err.result);
+        if(opts.errorClass)
+          opts.errorContainer(err.domElem).toggleClass(opts.errorClass, !exec.success);
+      });
+
+      exec.errorDisplayed = true;
     }
 
   });
@@ -134,11 +152,11 @@ var ValidationForm = null;
      * ===================================== */
     type: "ValidationForm",
 
-    init: function(elem, options) {
+    init: function(domElem, options) {
       //sanity checks
-      if(!elem.length) return;
-      if(!elem.is("form")) return;
-      if(!this._super(elem)) return;
+      if(!domElem.length) return;
+      if(!domElem.is("form")) return;
+      if(!this._super(domElem)) return;
 
       this.options = new CustomOptions(options);
 
@@ -163,7 +181,7 @@ var ValidationForm = null;
 
     bindEvents: function() {
 
-      this.elem
+      this.domElem
         .on("keyup.jqv", "input", this.onKeyup)
         .on("blur.jqv", "input[type=text]:not(.hasDatepicker),input:not([type].hasDatepicker)", this.onValidate)
         .on("change.jqv", "input[type=text].hasDatepicker", this.onValidate)
@@ -177,12 +195,12 @@ var ValidationForm = null;
     },
 
     unbindEvents: function() {
-      this.elem.off(".jqv");
+      this.domElem.off(".jqv");
     },
 
     updateFields: function() {
       var sel = "["+this.options.validateAttribute+"]";
-      this.elem.find(sel).each(this.updateField);
+      this.domElem.find(sel).each(this.updateField);
 
       // this.log("print form", true);
       // this.print();
@@ -191,18 +209,18 @@ var ValidationForm = null;
     
     //creates new validation elements
     //adds them to the form
-    updateField: function(i, elem) {
-      if(i.jquery !== undefined) elem = i;
-      if(elem.jquery === undefined)
-        elem = $(elem);
+    updateField: function(i, domElem) {
+      if(i.jquery !== undefined) domElem = i;
+      if(domElem.jquery === undefined)
+        domElem = $(domElem);
 
       var fieldSelector = "input:not([type=hidden]),select,textarea",
           field, fieldElem;
 
-      if(!elem.is(fieldSelector))
-        return this.warn("Containers cannot use validators");
+      if(!domElem.is(fieldSelector))
+        return this.warn("Element '"+domElem.prop('tagName')+"' cannot use validators");
 
-      fieldElem = elem;
+      fieldElem = domElem;
 
       field = this.fields.find(fieldElem);
 
@@ -246,7 +264,7 @@ var ValidationForm = null;
     doSubmit: function(err, result) {
       this.submitPending = false;
       this.submitResult = !err;
-      this.elem.submit(); //trigger onSubmit, though with a result
+      this.domElem.submit(); //trigger onSubmit, though with a result
       this.submitResult = undefined;
     },
 
@@ -257,8 +275,8 @@ var ValidationForm = null;
 
     //user triggered validate field event
     onValidate: function(event) {
-      var elem = $(event.currentTarget);
-      var field = elem.data('asyncValidator') || this.updateField(elem);
+      var domElem = $(event.currentTarget);
+      var field = domElem.data('asyncValidator') || this.updateField(domElem);
       field.log("validate");
       field.validate($.noop);
     },
@@ -269,9 +287,12 @@ var ValidationForm = null;
 
     validate: function(callback) {
       this.updateFields();
-      var exec = new FormExecution(this);
-      exec.execute().always(function(e) {
-        (callback || $.noop)(e.result);
+      //finish old executions
+      // if(this.execution && this.execution.status === 1)
+      //   this.execution.cancel();
+
+      (new FormExecution(this)).execute().always(function(exec) {
+        if(callback) callback(exec.result, exec.success);
       });
       return undefined;
     },

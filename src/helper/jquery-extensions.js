@@ -32,7 +32,12 @@ $.Deferred.serialize = function(fns) {
   if(!$.isArray(fns) || fns.length === 0)
     return $.Deferred().resolve().promise();
 
-  var pipeline = fns[0](), i = 1, l = fns.length;
+  var pipeline = fns[0](),
+      i = 1, l = fns.length;
+
+  if(!pipeline || !pipeline.pipe)
+    throw "Invalid Deferred Object";
+
   for(;i < l;i++)
     pipeline = pipeline.pipe(fns[i]);
 
@@ -60,8 +65,13 @@ $.Deferred.parallelize = function(fns) {
   }
 
   //execute all at once
-  for(; i<l; ++i )
-    fns[i]().done(pass).fail(fail);
+  for(; i<l; ++i ) {
+    var dd = fns[i]();
+    if(!dd || !dd.done || !dd.fail)
+      throw "Invalid Deferred Object";
+    dd.done(pass).fail(fail);
+  }
+    
 
   return d.promise();
 };

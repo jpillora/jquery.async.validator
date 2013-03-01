@@ -79,7 +79,10 @@ var Rule = BaseClass.extend({
   //refer to the rule 'r' object
   defaultInterface: {
     log: log,
-    warn: warn
+    warn: warn,
+    ajax: function(userOpts) {
+      ajaxHelper(userOpts, this);
+    }
   },
 
   defaultFieldInterface: {
@@ -89,13 +92,34 @@ var Rule = BaseClass.extend({
   },
 
   defaultGroupInterface: {
+    val: function(id) {
+      if(!id) throw "Missing group element id. See docs.";
+      var field = this.groupElem(id);
+      if(field) return field.val();
+    },
     fields: function(selector) {
       return this.field.find(selector || 'input,select');
+    },
+    groupElem: function(id) {
+      var elems = $.grep(this._exec.members, function(exec) {
+        return exec.id === id;
+      });
+
+      var elem = elems.length ? elems[0].element.domElem : null;
+
+      if(!elem)
+        this.warn("Cannot find group element with id: '" + id + "'");
+      return elem;
+    },
+    groupElems: function() {
+      return $.map(this._exec.members, function(exec) {
+        return exec.element.domElem;
+      });
     }
   },
 
   //build public ruleInterface the 'r' rule object
-  buildInterface: function(ruleInterface) {
+  buildInterface: function(exec) {
     var objs = [];
 
     objs.push({});
@@ -106,7 +130,15 @@ var Rule = BaseClass.extend({
       objs.push(this.defaultFieldInterface);
     if(this.type === 'group')
       objs.push(this.defaultGroupInterface);
-    objs.push(ruleInterface);
+
+    objs.push({
+      field: exec.element.domElem,
+      form:  exec.element.form.domElem,
+      callback: exec.callback,
+      params: exec.params,
+      args: exec.params,
+      _exec: exec
+    });
 
     return $.extend.apply(this,objs);
   }
@@ -199,26 +231,26 @@ var ruleManager = null;
   };
 
   //extract an objectified version of the "data-validate" attribute
-  var parseAttribute = function(validationElem) {
-    var attrName = validationElem.form.options.validateAttribute,
-        attr = validationElem.elem.attr(attrName);
+  var parseAttribute = function(element) {
+    var attrName = element.form.options.validateAttribute,
+        attr = element.domElem.attr(attrName);
     if(!attr) return null;
     return parse(attr);
   };
 
   //add a rule property to the above object
-  var parseElement = function(validationElem) {
+  var parseElement = function(element) {
 
     var required = false,
         type = null,
         results = [];
 
-    if(validationElem.type !== 'ValidationField')
+    if(element.type !== 'ValidationField')
       return warn("Cannot get rules from invalid type");
 
-    if(!validationElem.elem) return [];
+    if(!element.domElem) return [];
 
-    results = this.parseAttribute(validationElem);
+    results = this.parseAttribute(element);
 
     if(!results) return [];
 

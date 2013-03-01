@@ -7,9 +7,9 @@ describe "Group validation (Advanced)", ->
   html = """
     <div data-demo>
       <form>
-        <div data-validate="required,sumTo10">
-          <input name="f1" value="" data-validate="number">
-          <input name="f2" value="3" data-validate="number">
+        <div>
+          <input name="f1" value="" data-validate="required,number,sumTo10">
+          <input name="f2" value="3" data-validate="required,number,sumTo10">
         </div>
         <input name="f3" value="abc">
         <input class="submit" type="submit"/>
@@ -18,15 +18,13 @@ describe "Group validation (Advanced)", ->
   """
   #validators used in this spec
   $.asyncValidator.addGroupRules
-    sumTo10:
-      run: 'after'
-      fn: (r) ->
-        sum = 0
-        r.fields().each ->
-          sum += parseInt($(@).val())
+    sumTo10: (r) ->
+      sum = 0
+      r.groupElems().each ->
+        sum += parseInt($(@).val())
 
-        return "Fields must all sum to 10 not " + sum if sum isnt 10
-        true
+      return "Fields must all sum to 10 not " + sum if sum isnt 10
+      true
 
   beforeEach ->
     $('#konacha').html html

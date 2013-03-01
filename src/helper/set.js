@@ -63,7 +63,8 @@ var Set = Class.extend({
   },
   each: function(fn) {
     for(var i = 0, l = this.array.length; i<l; ++i)
-      fn(this.get(i));
+      if( fn(this.get(i)) === false)
+        return;
   },
   map: function(fn) {
     return $.map(this.array,fn);

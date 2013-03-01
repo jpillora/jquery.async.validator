@@ -24,6 +24,8 @@ var globalOptions = {
   hideErrorOnChange: false,
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
+  // 
+  skipNotRequired: true,
   // What class name to apply to the 'errorContainer'
   errorClass: "error",
   // Filter method to find element to apply error class (default: the input)
