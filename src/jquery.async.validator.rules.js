@@ -234,55 +234,31 @@
     }
   });
 
-  /* Group validation rules.
-   * - same form as field validation rules
-   * - however 'r' has extra options:
-   *   # 'fields()': list of elements within the group
-   *   # 'run': must be 'before' or 'after'
-   *      whether to run the group rules before or after
-   *      the field validations (default: 'after')
+  /* Group validation rules
    */
   $.asyncValidator.addGroupRules({
 
-    dateRange: {
-      run: 'after',
-      fn: function(r) {
+    dateRange: function(r) {
+      var start = r.fields("[data-date=start]"),
+          end = r.fields("[data-date=end]");
 
-        var start = r.fields("[data-date=start]"),
-            end = r.fields("[data-date=end]");
-
-        if(start.length === 0 || end.length === 0) {
-          r.warn("Missing dateRange fields, skipping...");
-          return true;
-        }
-
-        var startDate = $.asyncValidator.utils.parseDate(start.val());
-        if(!startDate)
-          return "Invalid Start Date";
-
-        var endDate = $.asyncValidator.utils.parseDate(end.val());
-        if(!endDate)
-          return "Invalid End Date";
-
-        if(startDate >= endDate)
-          return "Start Date must come before End Date";
-
+      if(start.length === 0 || end.length === 0) {
+        r.warn("Missing dateRange fields, skipping...");
         return true;
       }
-    },
 
-    min_checks: {
-      run: 'before',
+      var startDate = $.asyncValidator.utils.parseDate(start.val());
+      if(!startDate)
+        return "Invalid Start Date";
 
-      fn: function(r) {
+      var endDate = $.asyncValidator.utils.parseDate(end.val());
+      if(!endDate)
+        return "Invalid End Date";
 
-        var checks = r.fields("input[type=checkbox]:checked");
-        var checksRequired = parseInt(r.args[0],10);
+      if(startDate >= endDate)
+        return "Start Date must come before End Date";
 
-        if(checks.length < checksRequired)
-          return "You must choose at least " + (checksRequired === 1 ? 'one' : checksRequired);
-        return true;
-      }
+      return true;
     }
 
   });

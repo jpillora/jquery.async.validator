@@ -44,32 +44,36 @@ describe "Extending validations", ->
 
   describe "When submitted", ->
 
-    it "extended validator should be invalid", ->
+    it "extended validator should be invalid", (done) ->
       form.validate (result) ->
-        expect(result).to.be.a "string"
+        expect(result).to.be.false
+        done()
 
     describe "Make valid", ->
 
       beforeEach ->
         form.find("input[name=field2]").val "def"
 
-      it "extended validator should be valid", ->
+      it "extended validator should be valid", (done) ->
         form.validate (result) ->
-          expect(result).to.equal `undefined`
+          expect(result).to.be.true
+          done()
 
       describe "Enable validator 3", ->
 
         beforeEach ->
           form.find("input[name=field3]").attr "data-validate", "validator3"
 
-        it "double extended validator should be invalid", ->
+        it "double extended validator should be invalid", (done) ->
           form.validate (result) ->
-            expect(result).to.be.a 'string'
+            expect(result).to.be.false
+            done()
 
-        it "double extended validator should be valid", ->
+        it "double extended validator should be valid", (done) ->
           form.find("input[name=field3]").val "defdef"
           form.validate (result) ->
-            expect(result).to.equal `undefined`
+            expect(result).to.be.true
+            done()
 
 
 

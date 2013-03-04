@@ -24,7 +24,7 @@ var globalOptions = {
   hideErrorOnChange: false,
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
-  // 
+  // Whether to skip empty fields that aren't required
   skipNotRequired: true,
   // What class name to apply to the 'errorContainer'
   errorClass: "error",
@@ -32,9 +32,9 @@ var globalOptions = {
   errorContainer: function (e) {
     return e;
   },
-  //Post form-submit validation hook
-  onValidationComplete: function(form, status) {
-    return status;
+  //Before form-submit hook
+  beforeSubmit: function(e, result) {
+    return result;
   },
   //tracking method
   track: $.noop,

@@ -32,71 +32,86 @@ describe "Validators", ->
     form.asyncValidator(false)
 
   describe "number", ->
-    it "should be a number", ->
+    it "should be a number", (done) ->
       $('#number').val('X').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid", ->
+    it "should be valid", (done) ->
       $('#number').val('42').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
   describe "required", ->
-    it "should be required", ->
+    it "should be required", (done) ->
       $('#required').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid", ->
+    it "should be valid", (done) ->
       $('#required').val('X').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
   describe "phone (aus)", ->
 
-    it "should start with 0", ->
+    it "should start with 0", (done) ->
       $('#phone').val('1299998888').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be 10 chars", ->
+    it "should be 10 chars", (done) ->
       $('#phone').val('099998888').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid", ->
+    it "should be valid", (done) ->
       $('#phone').val('0299998888').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
 
   describe "multiple", ->
 
-    it "should be invalid (required)", ->
+    it "should be invalid (required)", (done) ->
       $('#multiRequired').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be invalid (number)", ->
+    it "should be invalid (number)", (done) ->
       $('#multiRequired').val('hello').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid", ->
+    it "should be valid", (done) ->
       $('#multiRequired').val('42').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
-    it "should be invalid (NOT required but is word)", ->
+    it "should be invalid (NOT required but is word)", (done) ->
       $('#multiOptional').val('hello').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid (NOT required)", ->
+    it "should be valid (NOT required)", (done) ->
       $('#multiOptional').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
   describe "min-max chars", ->
 
-    it "should be invalid (min)", ->
+    it "should be invalid (min)", (done) ->
       $('#minMax').val('aa').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be invalid (max)", ->
+    it "should be invalid (max)", (done) ->
       $('#minMax').val('aaaaaa').validate (result) ->
-        expect(result).to.be.a 'string'
+        expect(result).to.be.false
+        done()
 
-    it "should be valid", ->
+    it "should be valid", (done) ->
       $('#minMax').val('aaaa').validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 

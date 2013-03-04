@@ -4,6 +4,14 @@
 
 var Utils = {
 
+  //check options
+  checkOptions: function(opts) {
+    if(!opts) return;
+    for(var key in opts)
+      if(globalOptions[key] === undefined)
+        warn("Invalid option: '" + key + "'");
+  },
+
   //append to arguments[i]
   appendArg: function(args, expr, i) {
       if(!i) i = 0;

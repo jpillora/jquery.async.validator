@@ -25,37 +25,21 @@ describe "Basic validations", ->
       expect($.isFunction(form.asyncValidator)).to.equal true
 
     it "should have attached validation engine object", ->
-      expect(form.data("asyncValidator")).not.to.equal `undefined`
-
-
-  describe "Field/Fieldset counts", ->
-    it "should have 1 'no_group' fieldset", ->
-      form.validate()
-      obj = form.data("asyncValidator")
-      expect(obj.fieldsets.size()).to.equal 1
-
-    it "num fields in form, should be num fields in fieldsets", ->
-      form.validate()
-      obj = form.data("asyncValidator")
-      numFields = 0
-      obj.fieldsets.each (fs) ->
-        numFields += fs.fields.size()
-
-      expect(obj.fields.size()).to.equal numFields
-
+      v = form.data("asyncValidator")
+      expect(v).to.be.an "object"
 
   describe "When submitted", ->
-    it "should be valid", ->
+    it "should be valid", (done)  ->
       form.validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        done()
 
-
-    it "should be invalid", ->
-      
+    it "should be invalid", (done) ->
       #make invalid
       form.find("input:first").val "abc"
       form.validate (result) ->
-        expect(result).to.be.a "string"
+        expect(result).to.be.false
+        done()
 
 
 

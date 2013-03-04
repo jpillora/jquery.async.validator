@@ -14,30 +14,22 @@ var ValidationForm = null;
     type: "ValidationElement",
     init: function(domElem) {
 
-      this.bindAll();
+      if(!domElem || !domElem.length)
+        throw "Missing Element";
+
       this.domElem = domElem;
-      this.setName();
+      this.bindAll();
+      this.name = this.domElem.attr('name') || 
+                  this.domElem.attr('id') ||
+                  guid();
       this.execution = null;
 
-      if(!domElem.length || domElem.data('asyncValidator'))
+      if(domElem.data('asyncValidator'))
         return false;
 
-      if(domElem)
-        domElem.data('asyncValidator',this);
+      domElem.data('asyncValidator',this);
 
       return true;
-    },
-
-    setName: function() {
-      var name = null;
-
-      if(this.domElem)
-        name = this.domElem.attr('name') || this.domElem.attr('id');
-
-      if(!name)
-        name = guid();
-
-      this.name = name;
     },
 
     equals: function(that) {
@@ -57,25 +49,6 @@ var ValidationForm = null;
         return e1.equals(e2);
 
       return false;
-    },
-
-    print: function() {
-      if(this instanceof ValidationField)
-        this.log(">");
-
-      function innerPrint(validationElem) {
-        if(!(validationElem instanceof ValidationElement))
-          return;
-        validationElem.print();
-      }
-
-      for(var name in this) {
-        var prop = this[name];
-        if(!(prop instanceof Set)) continue;
-        this.log(name + " #"+ prop.size(), true);
-        prop.each(innerPrint);
-        this.log(undefined, false);
-      }
     }
 
   });
@@ -89,8 +62,9 @@ var ValidationForm = null;
     //class variables
     type: "ValidationField",
     init: function(domElem, form) {
-      //sanity checks
-      if(!this._super(domElem)) return;
+
+      this._super(domElem);
+
       //instance variables
       this.form = form;
       this.options = form.options;
@@ -101,7 +75,7 @@ var ValidationForm = null;
     //for use with $(field).validate(callback);
     validate: function(callback) {
       (new FieldExecution(this)).execute().always(function(exec) {
-        if(callback) callback(exec.result, exec.success);
+        if(callback) callback(exec.success, exec.result);
       });
       return undefined;
     },
@@ -112,6 +86,7 @@ var ValidationForm = null;
       //manage this field within shared groups
       for(var i = 0; i < this.rules.length; ++i) {
         var r = this.rules[i];
+        if(!r.rule) continue;
         if(r.rule.type !== 'group') continue;
         if(!this.groups[r.name])
           this.groups[r.name] = {};
@@ -122,22 +97,45 @@ var ValidationForm = null;
       }
     },
 
-    displayErrors: function(exec) {
+    handleResult: function(exec) {
       
+      // console.warn(this.name + " display: ", exec.type, exec.name);
+
       if(exec.errorDisplayed) return;
-
-      var opts = this.options,
-          prompt = opts.prompt,
-          errorFields = exec.getErrorFields();
-
-      $.each(errorFields, function(i, err) {
-        prompt(err.domElem, err.result);
-        if(opts.errorClass)
-          opts.errorContainer(err.domElem).toggleClass(opts.errorClass, !exec.success);
-      });
-
       exec.errorDisplayed = true;
+
+      if(!$.isArray(exec.result)) return;
+
+      var opts = this.options, texts = [], text,
+          container = null, i, domElem, result;
+
+      for(i = 0; i < exec.result.length; ++i) {
+
+        domElem = exec.result[i].domElem;
+        text = exec.result[i].result;
+
+        opts.prompt(domElem, text);
+        
+        if(text) texts.push(text);
+
+        container = opts.errorContainer(domElem);
+        if(container && container.length)
+          container.toggleClass(opts.errorClass, !exec.success);
+      }
+
+      this.trackResult(this.domElem, texts.join(','), exec);
+    },
+
+    trackResult: function(domElem, text, exec) {
+      if(exec.parent && exec.parent.formExecution) return;
+
+      this.options.track(
+        'Validate',
+        [this.form.name,this.name].join(' '),
+        exec.skip ? 'Skip' : exec.success ? 'Valid' : text
+      );
     }
+
 
   });
 
@@ -154,9 +152,10 @@ var ValidationForm = null;
 
     init: function(domElem, options) {
       //sanity checks
-      if(!domElem.length) return;
-      if(!domElem.is("form")) return;
-      if(!this._super(domElem)) return;
+      this._super(domElem);
+      
+      if(!domElem.is("form"))
+        throw "Must be a form";
 
       this.options = new CustomOptions(options);
 
@@ -201,10 +200,6 @@ var ValidationForm = null;
     updateFields: function() {
       var sel = "["+this.options.validateAttribute+"]";
       this.domElem.find(sel).each(this.updateField);
-
-      // this.log("print form", true);
-      // this.print();
-      // this.log(null, false);
     },
     
     //creates new validation elements
@@ -237,7 +232,7 @@ var ValidationForm = null;
     /* ===================================== *
      * Event Handlers
      * ===================================== */
-
+    
     onSubmit: function(event) {
 
       var submitForm = false;
@@ -254,16 +249,16 @@ var ValidationForm = null;
 
       //have result
       } else if (this.submitResult !== undefined) {
-        submitForm = this.options.onValidationComplete(event, this.submitResult);
+        submitForm = this.options.beforeSubmit.call(this.domElem, event, this.submitResult);
       }
 
       if(!submitForm) event.preventDefault();
       return submitForm;
     },
 
-    doSubmit: function(err, result) {
+    doSubmit: function(result, errorsArray) {
       this.submitPending = false;
-      this.submitResult = !err;
+      this.submitResult = result;
       this.domElem.submit(); //trigger onSubmit, though with a result
       this.submitResult = undefined;
     },
@@ -287,12 +282,9 @@ var ValidationForm = null;
 
     validate: function(callback) {
       this.updateFields();
-      //finish old executions
-      // if(this.execution && this.execution.status === 1)
-      //   this.execution.cancel();
 
       (new FormExecution(this)).execute().always(function(exec) {
-        if(callback) callback(exec.result, exec.success);
+        if(callback) callback(exec.success, exec.result);
       });
       return undefined;
     },

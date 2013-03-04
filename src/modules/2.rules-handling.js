@@ -92,15 +92,11 @@ var Rule = BaseClass.extend({
   },
 
   defaultGroupInterface: {
-    val: function(id) {
-      if(!id) throw "Missing group element id. See docs.";
-      var field = this.groupElem(id);
-      if(field) return field.val();
+    val: function(id, newVal) {
+      var field = this.field(id);
+      if(field) return newVal === undefined ? field.val() : field.val(newVal);
     },
-    fields: function(selector) {
-      return this.field.find(selector || 'input,select');
-    },
-    groupElem: function(id) {
+    field: function(id) {
       var elems = $.grep(this._exec.members, function(exec) {
         return exec.id === id;
       });
@@ -111,10 +107,10 @@ var Rule = BaseClass.extend({
         this.warn("Cannot find group element with id: '" + id + "'");
       return elem;
     },
-    groupElems: function() {
-      return $.map(this._exec.members, function(exec) {
+    fields: function() {
+      return $().add($.map(this._exec.members, function(exec) {
         return exec.element.domElem;
-      });
+      }));
     }
   },
 
@@ -126,17 +122,17 @@ var Rule = BaseClass.extend({
     //user object has lowest precedence!
     objs.push(this.userObj);
     objs.push(this.defaultInterface);
-    if(this.type === 'field')
+    if(this.type === 'field') {
       objs.push(this.defaultFieldInterface);
+      objs.push({ field: exec.element.domElem });
+    }
     if(this.type === 'group')
       objs.push(this.defaultGroupInterface);
 
     objs.push({
-      field: exec.element.domElem,
       form:  exec.element.form.domElem,
       callback: exec.callback,
-      params: exec.params,
-      args: exec.params,
+      args: exec.args,
       _exec: exec
     });
 
@@ -152,7 +148,7 @@ var ruleManager = null;
 (function() {
 
   //cached token parser - must be in form 'one(1,2,two(3,4),three.scope(6,7),five)'
-  var parse = Utils.memoize(function(str) {
+  var parseString = function(str) {
 
     var chars = str.split(""),
         rule, rules = [],
@@ -172,7 +168,7 @@ var ruleManager = null;
     
     //convert string in format: "name.scope#id(args...)" to object
     $.each(chars.join('').split(','), function(i, rule) {
-      m = rule.match(/^(\w+)(\.(\w+))?(\#(\w+))?(\((\w+(\;\w)*)\))?$/);
+      m = rule.match(/^(\w+)(\.(\w+))?(\#(\w+))?(\((\w+(\;\w+)*)\))?$/);
       if(!m) return warn("Invalid validate attribute: " + str);
       rule = {};
       rule.name = m[1];
@@ -182,7 +178,9 @@ var ruleManager = null;
       rules.push(rule);
     });
     return rules;
-  });
+  };
+
+  var parseStringMemo = Utils.memoize(parseString);
 
   //privates
   var rawRules = {},
@@ -235,7 +233,7 @@ var ruleManager = null;
     var attrName = element.form.options.validateAttribute,
         attr = element.domElem.attr(attrName);
     if(!attr) return null;
-    return parse(attr);
+    return parseStringMemo(attr);
   };
 
   //add a rule property to the above object
@@ -273,6 +271,7 @@ var ruleManager = null;
     addGroupRules: addGroupRules,
     getRule: getRule,
     getRawRule: getRawRule,
+    parseString: parseString,
     parseAttribute: parseAttribute,
     parseElement: parseElement
   };

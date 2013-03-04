@@ -17,14 +17,13 @@ describe "Ajax validations", ->
   $.asyncValidator.addFieldRules
     testAjax:
       fn: (r) ->
+
         setTimeout ->
           if r.val() is "def"
-            r.callback()
+            r.callback(true);
           else
             r.callback("My ajax test failed!")
         , 0
-        
-        #ajax!
         `undefined`
 
   beforeEach ->
@@ -35,26 +34,16 @@ describe "Ajax validations", ->
   describe "On submission", ->
     #valid test
     it "should be invalid", (done) ->
-
-      input = form.find("input:first")
-      expect(input.length).to.equal 1
-      expect(input.val()).to.equal "abc"
-
       form.validate (result) ->
-        expect(result).to.be.a "string"
+        expect(result).to.be.false
         done()
 
     #invalid test
     it "should be valid", (done) ->
-      
       #make invalid
-      input = form.find("input:first")
-      expect(input.length).to.equal 1
-      expect(input.val()).to.equal "abc"
-      input.val("def")
-
+      $("input:first").val("def")
       form.validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
         done()
 
 

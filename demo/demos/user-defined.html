@@ -1,0 +1,19 @@
+
+<!-- jQuery -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+<!-- Local Test -->
+<script src="../../dist/jquery.async.validator.prompt.js"></script>
+ 
+<form>
+  <input value="42" data-validate="test(43,32)"/>
+  <input value="abc" data-validate="test(1,2,3)"/>
+  <input type="submit"/>
+</form>
+
+<script>
+  $.asyncValidator.addRules({
+    test: function(r) {
+      return r.val() === "abc" || "Fail";
+    }
+  });
+</script>

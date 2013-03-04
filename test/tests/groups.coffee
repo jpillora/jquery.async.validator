@@ -3,6 +3,7 @@
 #BASIC TESTS
 describe "Group validations (Simple)", ->
 
+  runCount = 0
   form = null
   html = """
     <div data-demo>
@@ -18,16 +19,14 @@ describe "Group validations (Simple)", ->
   #validators used in this spec
   $.asyncValidator.addGroupRules
     testGroup: (r) ->
-
-      console.log(r.val("1"))
-      console.log(r.groupElem("2").val())
-
+      runCount++
       return "1 should be abc" unless r.val("1") is "abc"
-      return "2 should be def" unless r.val("2") is "def"
+      return "2 should be def" unless r.field("2").val() is "def"
       return true
 
   beforeEach ->
     $('#konacha').html html
+    runCount = 0
     form = $("form")
     form.asyncValidator(skipHiddenFields: false)
 
@@ -35,19 +34,21 @@ describe "Group validations (Simple)", ->
     it "should have 1 group", ->
       obj = form.data("asyncValidator")
       expect(_.size(obj.groups)).to.equal 1
-      expect(obj.groups.date_range).to.be.defined
+      expect(obj.groups.testGroup).to.exist
 
   describe "When submitted (simple)", ->
-    it.only "should be valid", (done) ->
+    it "should be valid", (done) ->
       form.validate (result) ->
-        expect(result).to.equal `undefined`
+        expect(result).to.be.true
+        expect(runCount).to.equal 1
         done()
 
     it "should be invalid", (done) ->
       #make invalid
       form.find("input:first").val "blah!"
       form.validate (result) ->
-        expect(result).to.be.a "string"
+        expect(result).to.be.false
+        expect(runCount).to.equal 1
         done()
 
   null

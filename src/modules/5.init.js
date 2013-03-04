@@ -28,6 +28,7 @@ $.fn.asyncValidator = function(userOptions) {
       return;
     }
 
+    Utils.checkOptions(userOptions);
     if(form) {
       form.extendOptions(userOptions);
     } else {
@@ -39,6 +40,7 @@ $.fn.asyncValidator = function(userOptions) {
 };
 
 $.asyncValidator = function(options) {
+  Utils.checkOptions(options);
   $.extend(globalOptions, options);
 };
 
@@ -52,7 +54,10 @@ $.extend($.asyncValidator, {
   defaults: globalOptions,
   globals: globalOptions,
   utils: Utils,
-  forms: new TypedSet(ValidationForm, [], "FormSet")
+  forms: new TypedSet(ValidationForm, [], "FormSet"),
+  _hidden: {
+    ruleManager: ruleManager
+  }
 });
 
 /* ===================================== *

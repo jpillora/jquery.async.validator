@@ -1,26 +1,54 @@
+
+
+
 <div data-demo>
   <form>
     <input name="field" value="abc" data-validate="testAjax">
+    <input name="field" value="abc" data-validate="+#$#@">
     <input class="submit" type="submit"/>
   </form>
 </div>
 
-<script data-demo type="text/javascript">if(window.initScripts) window.initScripts['ajax'] = function(demoContainer){
-  $.asyncValidator.addRules({
-    field: {
-      testAjax: function(r) {
 
-        setTimeout(function() {
-          if(r.val() === 'abc')
-            r.callback();
-          else
-            r.callback('My ajax test failed!');
-        },100);
+<!-- jQuery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<!-- Local Test -->
+<script src="../../dist/jquery.async.validator.prompt.js"></script>
 
-        //ajax!
-        return undefined;
-      }
+<script type="text/javascript">
+  
+  $.asyncValidator({
+    debug: true,
+    skipNotRequired: false,
+    beforeSubmit: function(result) {
+      console.log("VALIDATION COMPLETE: " + result)
+      return false;
+    },
+    // prompt: function() {
+    //   console.warn("PROMPT", arguments[0].attr('id'), arguments[1]);
+    // },
+    track: function() {
+      console.log("TRACK", arguments);
     }
   });
-  $("form",demoContainer).asyncValidator();
-};</script>
+
+  $.asyncValidator.addRules({
+    testAjax: function(r) {
+      setTimeout(function() {
+        r.callback(Math.random() > 0.5 ? true : 'Failed');
+      }, 1000);
+    }
+  })
+
+  $(function() {
+
+    var selector = "form"// "#F1"
+    setTimeout(function() {
+      $(selector).validate(function(result) {
+        console.log("DONE", result);
+      });
+    }, 1000);
+
+  });
+
+</script>
