@@ -25,7 +25,7 @@ var globalOptions = {
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
   // Whether to skip empty fields that aren't required
-  skipNotRequired: true,
+  skipNotRequired: false,
   // What class name to apply to the 'errorContainer'
   errorClass: "error",
   // Filter method to find element to apply error class (default: the input)
@@ -40,8 +40,10 @@ var globalOptions = {
   track: $.noop,
   //prompt method,
   prompt: function(element, text, opts) {
-    if($.type($.prompt) === 'function')
+    if($.type($.prompt) === 'function') {
+      if(!opts) opts = {color: 'red'};
       $.prompt(element, text, opts);
+    }
   }
 };
 

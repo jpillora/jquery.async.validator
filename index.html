@@ -182,6 +182,46 @@
             <div class="alert"><strong>Note</strong> See the <a data-link>Rule Object</a> Spec for more information.</div>
           </div>
 
+          <div class="demo" data-nav-anchor="Asynchronous Rules">
+            
+            <p> They key to asynchronous rules is just to use the <a data-link>Rule Object</a>s <code>callback</code> method. So instead of <code>return "Failed";</code> and <code>return true;</code>, we'll now use <code>r.callback("Failed");</code> or <code>r.callback(true);</code>. By not <code>return</code>ing (which will actually returns <code>undefined</code>), you're telling the library to wait for a callback. If no callback is fired, a timeout warning will be displayed in the console.</p>
+           
+            <p>The above is exemplied here:</p>
+
+            <pre data-script></pre>
+            <script data-script type="text/javascript">
+              $.asyncValidator.addRules({
+
+                myAjax: function(r) {
+                  //Give the user some feedback
+                  r.field.prompt("Loading...", "black");
+                  //Simulate delay
+                  setTimeout(function() {
+                    var result;
+                    if(Math.random() > 0.5)
+                      result = true;
+                    else
+                      result = "My Ajax Failed";
+                    r.callback(result);
+                  }, 2000);
+                }
+
+              });
+            </script>
+
+            Now, we can use it
+            <pre data-html></pre>
+            <div data-html>
+              <form>
+                <input name="num" value="42" data-validate="myAjax">
+                <input class="submit" type="submit"/>
+              </form>
+            </div>
+            <div class="alert alert-info">
+              <strong>Note</strong> Asynchronous rules execute in the same way as synchronous rules. See <a data-link>Execution Sequence</a> for more information. 
+            </div>
+          </div>
+
         </div><!-- Custom -->
 
 
@@ -189,32 +229,93 @@
 
           <div class="demo" data-nav-anchor="Group Validations">
             <p>
-              If the validation you need to apply depends on two fields, for example, a date range needs both the start and the end dates to be validated. In this case, setting a <code>data-validate</code> attribute on one of the fields wouldn't make sense. So instead of placing the <code>data-validate</code> on the input fields, you place it on a parent. Note: All validations listed on a non-input field will seen as be Group Validations. 
+              Group validations are required when validation depends on two or more fields. Such as a date range or check the result of combining a set of fields.
             </p>
 
             <p>
-              Like so:
+              Group validations are defined in the same way as field (or single) validations, except you can provide two extra peices of optionally information:
             </p>
+
+            <p>
+              <b>Group ID</b> is generally required in most cases. It will provide an easy way to tag given elements in the context of validation. For example, the date range validation requires a start and an end date in order to execute validation.<br/>
+              <b>Group Scope</b> is for cases when you have more than one instance of the same group validator. For example, if you were to have two date validators on one form, you would use group scope to allow the library differentiate between the two.
+            </p>
+
+            <p>
+              Group validations are in the following format: 
+                <b><i>name</i>[<i>.scope</i>][<i>#id</i>][<i>(args ...)</i>]</b>
+            </p>
+
+            <p>
+              Try it out here:
+                <code>data-validate="</code>
+                <input id="parseStringInput" style="height:14px"/>
+                <code>"</code>
+            </p>
+
+            <pre id="parseStringOutput">
+            </pre>
+
+            <script type="text/javascript">
+              $("#parseStringInput").keyup(function() {
+                var result = $.asyncValidator._hidden.ruleManager.parseString( $(this).val() );
+                if(result) $("#parseStringOutput").text(JSON.stringify(result,null, 2));
+              }).trigger('keyup');
+            </script>
+
+
+            <p>
+              Dange range could be used like so:
+            </p>
+
             <pre data-html></pre>
 
-            And Voila:
+            Which will produce:
             <div data-html>
               <form>
-                <span data-validate="dateRange">
-                  <input value="3/1/2013x" data-validate="date" data-date="start">
-                  <input value="2/1/2013y" data-validate="date" data-date="end">
-                <span/>
+                <input value="3/1/2x13" data-validate="date,dateRange#start">
+                <input value="2/1/2013" data-validate="date,dateRange#end">
                 <input class="submit" type="submit"/>
               </form>
             </div>
-            <div class="alert"><strong>Note</strong> See the <a data-link>Rule Object</a> Spec for more information.</div>
+          </div>
+
+
+          <div class="demo" data-nav-anchor="Group Validation Errors">
+            <p>By default the error prompt will NOT be displayed on each member of the group, instead, only the field that triggered validation will display the message.</p>
+
+            <p>This can be overriden by instead returning a map of <code>id</code>s to <code>string</code>s, as shown here:
+
+            <pre data-script></pre>
+            <script data-script type="text/javascript">
+              $.asyncValidator.addGroupRules({
+                myGroup: function(r) {
+                  return { a: "An error for 'a'", c: "An error for 'c'"};
+                }
+              });
+            </script>
+
+            <pre data-html></pre>
+
+            Which will produce:
+            <div data-html>
+              <form>
+                <input data-validate="myGroup#a">
+                <input data-validate="myGroup#b">
+                <input data-validate="myGroup#c">
+                <input class="submit" type="submit"/>
+              </form>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>Note</strong> If the group validation is asynchronous, use <code>r.callback({ ... })</code>. 
+            </div>
+
           </div>
 
         </div><!-- Custom -->
 
         <div data-nav-heading="API" class="row-fluid">
-
-          <div class="alert"><strong>Note</strong> Documentation In Progress !</div>
 
           <div data-nav-anchor="Setup" class="demo">
             <table class="table table-striped table-bordered api-table">
@@ -223,10 +324,10 @@
               </thead>
               <tbody>
                 <tr><td>$.asyncValidator({...})</td><td>Override the global options object</td><td>An <a data-link>Options</a> Object</td></tr>
-                <tr><td>$<code>("form")</code>.asyncValidator({...})</td><td>Enable and override the options of a selected form</td><td>An <a data-link>Options</a> Object</td></tr>
+                <tr><td>$<code>("form")</code>.asyncValidator({...})</td><td>Enable and/or override the options of a selected form</td><td>An <a data-link>Options</a> Object</td></tr>
               </tbody>
             </table>
-            <div class="alert alert-info"><strong>Note</strong> $<code>("form")</code>.asyncValidator() gets automatically called on DOM ready (using default options). The above method will be required when dynamically adding new forms to the page.</div>
+            <div class="alert alert-info"><strong>Note</strong> $<code>("form")</code>.asyncValidator() gets automatically called on DOM ready (using default options). Though the above method will be required when dynamically adding new forms to the page.</div>
           </div>
           
           <div data-nav-anchor="Custom Validation Rules" class="demo">

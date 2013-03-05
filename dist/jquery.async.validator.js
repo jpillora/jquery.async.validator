@@ -1,4 +1,4 @@
-/** jQuery Asynchronous Validator - v0.0.1 - 2013/03/05
+/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/05
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */
@@ -473,7 +473,7 @@ var globalOptions = {
   // Whether to skip the hidden fields with validators
   skipHiddenFields: true,
   // Whether to skip empty fields that aren't required
-  skipNotRequired: true,
+  skipNotRequired: false,
   // What class name to apply to the 'errorContainer'
   errorClass: "error",
   // Filter method to find element to apply error class (default: the input)
@@ -488,8 +488,10 @@ var globalOptions = {
   track: $.noop,
   //prompt method,
   prompt: function(element, text, opts) {
-    if($.type($.prompt) === 'function')
+    if($.type($.prompt) === 'function') {
+      if(!opts) opts = {color: 'red'};
       $.prompt(element, text, opts);
+    }
   }
 };
 
@@ -1853,7 +1855,7 @@ log("plugin added.");
         return true;
       }
       var currDate = new Date();
-      var minDate = new Date();
+      var minDate = new Date(); 
       minDate.setFullYear(minDate.getFullYear() - parseInt(age,10));
       var fieldDate = $.asyncValidator.utils.parseDate(r.val());
 
@@ -1870,8 +1872,8 @@ log("plugin added.");
   $.asyncValidator.addGroupRules({
 
     dateRange: function(r) {
-      var start = r.fields("[data-date=start]"),
-          end = r.fields("[data-date=end]");
+      var start = r.field("start"),
+          end = r.field("end");
 
       if(start.length === 0 || end.length === 0) {
         r.warn("Missing dateRange fields, skipping...");

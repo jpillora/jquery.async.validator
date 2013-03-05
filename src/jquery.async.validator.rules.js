@@ -222,7 +222,7 @@
         return true;
       }
       var currDate = new Date();
-      var minDate = new Date();
+      var minDate = new Date(); 
       minDate.setFullYear(minDate.getFullYear() - parseInt(age,10));
       var fieldDate = $.asyncValidator.utils.parseDate(r.val());
 
@@ -239,8 +239,8 @@
   $.asyncValidator.addGroupRules({
 
     dateRange: function(r) {
-      var start = r.fields("[data-date=start]"),
-          end = r.fields("[data-date=end]");
+      var start = r.field("start"),
+          end = r.field("end");
 
       if(start.length === 0 || end.length === 0) {
         r.warn("Missing dateRange fields, skipping...");
