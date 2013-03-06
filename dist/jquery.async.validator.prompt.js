@@ -1,4 +1,4 @@
-/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/05
+/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/06
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */
@@ -1106,6 +1106,7 @@ var ValidationForm = null;
         return false;
 
       domElem.data('asyncValidator',this);
+      console.log('set', domElem[0])
 
       return true;
     },

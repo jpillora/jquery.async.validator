@@ -123,5 +123,5 @@ module.exports = (grunt) ->
       fs.writeFileSync dest, body
       done true
 
-  # Default task. webget  mocha
-  grunt.registerTask "default", "jshint concat wrap uglify".split(' ')
+  # Default task.           webget  
+  grunt.registerTask "default", "jshint concat wrap uglify mocha".split(' ')
