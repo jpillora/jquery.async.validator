@@ -696,7 +696,7 @@ var ruleManager = null;
     var chars = str.split(""),
         rule, rules = [],
         c, m, depth = 0;
-    
+
     //replace argument commas with semi-colons
     for(var i = 0, l = chars.length; i<l; ++i) {
       c = chars[i];
@@ -705,10 +705,10 @@ var ruleManager = null;
       if(depth > 1) return null;
       if(c === ',' && depth === 1) chars[i] = ";";
     }
-    
+
     //bracket check
     if(depth !== 0) return null;
-    
+
     //convert string in format: "name.scope#id(args...)" to object
     $.each(chars.join('').split(','), function(i, rule) {
       m = rule.match(/^(\w+)(\.(\w+))?(\#(\w+))?(\((\w+(\;\w+)*)\))?$/);
@@ -717,7 +717,7 @@ var ruleManager = null;
       rule.name = m[1];
       if(m[3]) rule.scope = m[3];
       if(m[5]) rule.id = m[5];
-      if(m[7]) rule.args = m[7].split(';');
+      rule.args = m[7] ? m[7].split(';') : [];
       rules.push(rule);
     });
     return rules;
@@ -848,7 +848,6 @@ var ValidationForm = null;
         return false;
 
       domElem.data('asyncValidator',this);
-      console.log('set', domElem[0])
 
       return true;
     },
