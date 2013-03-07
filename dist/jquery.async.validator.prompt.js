@@ -1,4 +1,4 @@
-/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/06
+/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/07
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */
@@ -348,7 +348,9 @@ function ajaxHelper(userOpts, r) {
         timeout: 15 * 1000
       },
       exec = r._exec,
-      promptContainer = r.triggerField || r.field,
+      promptContainer = exec.type === "GroupRuleExecution" ?
+          exec.element.domElem :
+          r.field,
       userSuccess = userOpts.success,
       userError   = userOpts.error,
       options = exec.element.options,
@@ -370,7 +372,7 @@ function ajaxHelper(userOpts, r) {
     var args = ajaxCache.loaded[serialised],
         success = userCallbacks.success;
 
-    success.apply(rule, args);
+    success.apply(r, args);
     return;
   }
 
@@ -383,14 +385,14 @@ function ajaxHelper(userOpts, r) {
   if(ajaxCache.loading[serialised].length !== 1) return;
 
   options.prompt(promptContainer, "Checking...", "load");
-  
+
   function intercept() {
     options.prompt(promptContainer, false);
 
     var reqs = ajaxCache.loading[serialised];
     while(reqs.length)
-      reqs.pop().success.apply(rule,arguments);
-    
+      reqs.pop().success.apply(r,arguments);
+
     ajaxCache.loaded[serialised] = arguments;
   }
 
