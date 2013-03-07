@@ -1,0 +1,38 @@
+<div data-demo>
+  <form>
+    <input name="f1" value="abc" data-validate="testGroup#1">
+    <input name="f2" value="def" data-validate="testGroup#2">
+    <input name="f3" value="xyz">
+    <input class="submit" type="submit"/>
+  </form>
+</div>
+
+
+<!-- jQuery -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+<!-- Local Test -->
+<script src="../../dist/jquery.async.validator.prompt.js"></script>
+
+<script data-demo type="text/javascript">
+
+$.asyncValidator({
+  debug:true,
+  beforeSubmit: function() { return false; }
+});
+
+$.asyncValidator.addGroupRules({
+  testGroup: function(r) {
+    r.ajax({
+    	url: 'ajax.html',
+    	cache: false,
+    	success: function() {
+    		r.callback(true);
+    	},
+    	error: function() {
+    		r.callback(false);
+    	}
+    });
+  }
+});
+
+</script>
