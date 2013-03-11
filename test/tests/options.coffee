@@ -17,7 +17,7 @@ describe "Options", ->
     form1 = $("#form1")
     form2 = $("#form2")
 
-  describe "Inheritance", ->
+  describe "Options - Inheritance", ->
 
     beforeEach ->
       form1.asyncValidator

@@ -42,7 +42,7 @@ describe "Group validations (Ajax)", ->
   afterEach ->
     unstubAjax()
 
-  describe "When submitted", ->
+  describe "Group validations (Ajax) - When submitted", ->
     it "should be valid", (done) ->
       input = $("input").first()
       #silent error, since group not ready

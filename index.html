@@ -435,6 +435,10 @@
       var s = document.getElementsByTagName('script')[0]; 
       s.parentNode.insertBefore(script, s);
 
+      window.onerror = function(msg, file, line) {
+        alert("JavaScript Error: " + msg);
+      }
+
     })();
   </script>
 

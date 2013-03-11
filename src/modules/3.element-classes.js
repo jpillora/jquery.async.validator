@@ -28,7 +28,6 @@ var ValidationForm = null;
         return false;
 
       domElem.data('asyncValidator',this);
-
       return true;
     },
 
@@ -98,7 +97,7 @@ var ValidationForm = null;
     },
 
     handleResult: function(exec) {
-      
+
       // console.warn(this.name + " display: ", exec.type, exec.name);
 
       if(exec.errorDisplayed) return;
@@ -114,8 +113,9 @@ var ValidationForm = null;
         domElem = exec.result[i].domElem;
         text = exec.result[i].result;
 
-        opts.prompt(domElem, text);
-        
+        if(opts.showPrompt)
+          opts.prompt(domElem, text);
+
         if(text) texts.push(text);
 
         container = opts.errorContainer(domElem);
@@ -153,7 +153,7 @@ var ValidationForm = null;
     init: function(domElem, options) {
       //sanity checks
       this._super(domElem);
-      
+
       if(!domElem.is("form"))
         throw "Must be a form";
 
@@ -171,15 +171,28 @@ var ValidationForm = null;
         ajax: { loading: {}, loaded: {} }
       };
 
-      $(document).ready(this.bindEvents);
+      $(document).ready(this.domReady);
     },
 
     extendOptions: function(opts) {
       $.extend(true, this.options, opts);
     },
 
-    bindEvents: function() {
+    domReady: function() {
+      this.bindEvents();
+      this.updateFields();
+      this.log("bound to " + this.fields.size() + " elems");
 
+      var opts = this.options;
+      if(opts.prevalidate) {
+        opts.showPrompt = false;
+        this.validate(function() {
+          opts.showPrompt = true;
+        });
+      }
+    },
+
+    bindEvents: function() {
       this.domElem
         .on("keyup.jqv", "input", this.onKeyup)
         .on("blur.jqv", "input[type=text]:not(.hasDatepicker),input:not([type].hasDatepicker)", this.onValidate)
@@ -188,9 +201,6 @@ var ValidationForm = null;
         .on("submit.jqv", this.onSubmit)
         .on("validated.jqv", this.scrollFocus)
         .trigger("initialised.jqv");
-
-      this.updateFields();
-      this.log("bound to " + this.fields.size() + " elems");
     },
 
     unbindEvents: function() {
@@ -201,7 +211,7 @@ var ValidationForm = null;
       var sel = "["+this.options.validateAttribute+"]";
       this.domElem.find(sel).each(this.updateField);
     },
-    
+
     //creates new validation elements
     //adds them to the form
     updateField: function(i, domElem) {

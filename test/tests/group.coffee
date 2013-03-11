@@ -30,13 +30,13 @@ describe "Group validations (Simple)", ->
     form = $("form")
     form.asyncValidator(skipHiddenFields: false)
 
-  describe "Group count", ->
+  describe "Group validations (Simple) - Group count", ->
     it "should have 1 group", ->
       obj = form.data("asyncValidator")
       expect(_.size(obj.groups)).to.equal 1
       expect(obj.groups.testGroup).to.exist
 
-  describe "When submitted (simple)", ->
+  describe "Group validations (Simple) - When submitted (simple)", ->
     it "should be valid", (done) ->
       form.validate (result) ->
         expect(result).to.be.true

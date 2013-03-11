@@ -16,6 +16,8 @@ var globalOptions = {
   validateAttribute: "data-validate",
   // Name of the event triggering field validation
   validationEventTrigger: "blur",
+  // Whether to do an initial silent validation on the form
+  prevalidate: false,
   // Automatically scroll viewport to the first error
   scroll: true,
   // Focus on the first input
@@ -96,4 +98,4 @@ var BaseClass = Class.extend({
     }, ms || 0);
   }
 
-}); 
+});

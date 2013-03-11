@@ -42,7 +42,7 @@ describe "Extending validations", ->
     form = $("form")
     form.asyncValidator(skipHiddenFields: false)
 
-  describe "When submitted", ->
+  describe "Extending validations - When submitted", ->
 
     it "extended validator should be invalid", (done) ->
       form.validate (result) ->

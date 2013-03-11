@@ -11,7 +11,8 @@
 </form>
 
 <script>
-  $(function() {
-    $("form").asyncValidator();
+  $.asyncValidator({
+    debug: true,
+    prevalidate: true
   });
 </script>
