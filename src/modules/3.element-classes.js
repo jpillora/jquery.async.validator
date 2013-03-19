@@ -183,11 +183,12 @@ var ValidationForm = null;
       this.updateFields();
       this.log("bound to " + this.fields.size() + " elems");
 
-      var opts = this.options;
+      var opts = this.options,
+          oldShowPrompt = opts.showPrompt;
       if(opts.prevalidate) {
         opts.showPrompt = false;
         this.validate(function() {
-          opts.showPrompt = true;
+          opts.showPrompt = oldShowPrompt;
         });
       }
     },
