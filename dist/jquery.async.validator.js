@@ -1415,7 +1415,7 @@ var FormExecution = null,
       } catch(e) {
         this.skip = true;
         result = true;
-        console.error("Error caught in rule: '" + this.rule.name + "', skipping.\n" + e.stack);
+        console.error("Error caught in validation rule: '" + this.rule.name + "', skipping.\nERROR: " + e.toString() + "\nSTACK:" + e.stack);
       }
 
       //used return statement
