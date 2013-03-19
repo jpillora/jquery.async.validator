@@ -1,4 +1,4 @@
-/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/11
+/** jQuery Asynchronous Validator - v0.0.2 - 2013/03/19
  * https://github.com/jpillora/jquery.async.validator
  * Copyright (c) 2013 Jaime Pillora - MIT
  */
@@ -748,6 +748,8 @@ var globalOptions = {
   },
   //tracking method
   track: $.noop,
+  //whether to show prompts
+  showPrompt: true,
   //prompt method,
   prompt: function(element, text, opts) {
     if($.type($.prompt) === 'function') {

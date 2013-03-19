@@ -40,6 +40,8 @@ var globalOptions = {
   },
   //tracking method
   track: $.noop,
+  //whether to show prompts
+  showPrompt: true,
   //prompt method,
   prompt: function(element, text, opts) {
     if($.type($.prompt) === 'function') {
