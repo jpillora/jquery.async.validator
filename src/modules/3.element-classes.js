@@ -224,7 +224,7 @@ var ValidationForm = null;
           field, fieldElem;
 
       if(!domElem.is(fieldSelector))
-        return this.warn("Element '"+domElem.prop('tagName')+"' cannot use validators");
+        return this.warn("Validators will not work on container elements ("+domElem.prop('tagName')+"). Please use INPUT, SELECT or TEXTAREA.");
 
       fieldElem = domElem;
 
@@ -243,7 +243,7 @@ var ValidationForm = null;
     /* ===================================== *
      * Event Handlers
      * ===================================== */
-    
+
     onSubmit: function(event) {
 
       var submitForm = false;
