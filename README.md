@@ -1,3 +1,3 @@
 ##This repo has moved to:
 
-# http://verifyjs.com (and on [GitHib](https://github.com/jpillora/verifyjs))
+# http://verifyjs.com (and on [GitHub](https://github.com/jpillora/verifyjs))
